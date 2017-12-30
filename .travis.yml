@@ -1,0 +1,31 @@
+language: java
+env:
+  global:
+  - GITHUB_REPO=symbiote-h2020/EnablerLogic
+  - secure: KESEqSLgPQDLIWJC12SXzhV6Xh35uBPONlRUOm0DXSbn/2gEzoKzOvgjQeEGTu8lm6oSdKjWjaVqMoDMDNbXfTymNfRwxTs/Qbsg/1QmzzlQwxtQy8ZeVcOvdaL9TRjl3yFhmzl4UevvqZWbVoHm8ZjgaiGLCFZMVZKjjVgcFgNdCqZWIPHIar/3vTNR/r9QjAZDoNF5XLVWP0J7aCsTExm0zxkf3xV3J/p0WVMby6TsTiIcI3ytAPYRTvRJKUPytLx0hZkQCXX9DE/EvS76GIiJCMSWUAq8lR9l7/mZ0KqbXb3ff/bYx2mbRl4g5Fa6DDVe2yY4BGANcYqMufqYJtyxa6/N5zMeJgjmqRI+AbEWneubK52sovLpVSFQztleb3QFfxPJJ9rEgOORX3Gp3TVL9itAS9yGrgmsd3GXYELTetiApPK9a7TpfPqMY59Z0fDC52VRABm9QSB94Dd12O6wnJbUZyIxnfAB0QVasWVQDzAwBy3Vwk35VhJEbQ8lUziwysfSztPE0AWjQqwGJ/8Bl8kC+BG5oFf+myoDZcjzPgvtIQU8NjB4e70jnjA6SttBlJJHTvQLQQUDpWyAspQoXhupDnfl7AsCWS9mVPHlYFWjWkURo7p7kFWO+Sb02FVZT90a3QHipEetFVEPLNwjF2ApM9OeGZxcP3R3uCU=
+jdk:
+- oraclejdk8
+services:
+- mongodb
+sudo: required
+branches:
+  only:
+  - staging
+install: true
+before_cache:
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+  - "$HOME/.gradle/caches/"
+before_script:
+- chmod a+x merge_script.sh
+- "./merge_script.sh"
+after_success:
+- chmod a+x pushing_script.sh
+- "./pushing_script.sh"
+- bash <(curl -s https://codecov.io/bash)
+notifications:
+  email:
+    on_success: never
+    on_failure: always
