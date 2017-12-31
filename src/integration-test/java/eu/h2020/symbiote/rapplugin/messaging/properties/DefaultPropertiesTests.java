@@ -32,7 +32,7 @@ public class DefaultPropertiesTests {
 
     @Test
     public void shouldHaveEnablerName() throws Exception {
-        assertThat(props.getEnablerName()).isEqualTo("DefaultRapPluginName");
+        assertThat(props.getPluginName()).isEqualTo("DefaultRapPluginName");
     }
 
     @Test
