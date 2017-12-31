@@ -31,7 +31,7 @@ public class PropertiesTests {
 
     @Test
     public void shouldHaveEnablerName() throws Exception {
-        assertThat(props.getEnablerName()).isEqualTo("EnablerLogicExample");
+        assertThat(props.getPluginName()).isEqualTo("EnablerLogicExample");
     }
 
     @Test

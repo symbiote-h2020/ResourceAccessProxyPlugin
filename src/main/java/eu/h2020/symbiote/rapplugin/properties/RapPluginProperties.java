@@ -4,14 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Component("rapPluginProperties")
 public class RapPluginProperties {
     @Getter
     @Value("${spring.application.name:DefaultRapPluginName}")
-    private String enablerName = "";
+    private String pluginName = "";
 
     @Getter
     private RabbitConnectionProperties rabbitConnection;

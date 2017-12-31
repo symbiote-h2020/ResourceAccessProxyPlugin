@@ -75,7 +75,7 @@ public class RapPlugin implements SmartLifecycle {
     @Autowired
     public RapPlugin(RabbitManager rabbitManager, RapPluginProperties props) {
         this(rabbitManager, 
-                props.getEnablerName(), 
+                props.getPluginName(), 
                 props.getPlugin().isFiltersSupported(), 
                 props.getPlugin().isNotificationsSupported()
         );

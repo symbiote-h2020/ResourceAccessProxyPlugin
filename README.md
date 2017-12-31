@@ -165,7 +165,7 @@ rapPlugin.registerWritingToResourceListener(new WritingToResourceListener() {
 
 ## Running
 
-You can run this enabler as any other spring boot application.
+You can run this component as any other spring boot application.
 
 `./gradlew bootRun`
 
