@@ -40,6 +40,9 @@ import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
 import eu.h2020.symbiote.enabler.messaging.model.rap.registration.RegisterPluginMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.registration.UnregisterPluginMessage;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
+import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
+import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
+import eu.h2020.symbiote.rapplugin.messaging.RapPluginResponse;
 import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
 import eu.h2020.symbiote.model.cim.Observation;
 import lombok.Getter;
@@ -94,7 +97,7 @@ public class RapPlugin implements SmartLifecycle {
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.get'}"
     ))
-    public List<Observation> fromAmqpReadResource(Message<?> msg) {
+    public RapPluginResponse fromAmqpReadResource(Message<?> msg) {
         LOG.debug("reading resource: {}", msg.getPayload());
 
         try {
@@ -108,15 +111,18 @@ public class RapPlugin implements SmartLifecycle {
                     internalId = internalIdTemp;
             }
             List<Observation> observationList = doReadResource(internalId);
-            return observationList;
+            return new RapPluginOkResponse(observationList);
         } catch (Exception e) {
-            if(msg.getPayload() instanceof byte[])
-                LOG.error("Can not read Observation for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8), e);
-            else
-                LOG.error("Can not read Observation for request: " + msg.getPayload(), e);
+            if(msg.getPayload() instanceof byte[]) {
+                String responseMsg = "Can not read Observation for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8);
+                LOG.error(responseMsg, e);
+                return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage()); 
+            } else {
+                String responseMsg = "Can not read Observation for request: " + msg.getPayload();
+                LOG.error(responseMsg, e);
+                return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
+            }
         }
-
-        return new LinkedList<>();
     }
 
     @RabbitListener(bindings = @QueueBinding(
@@ -124,7 +130,7 @@ public class RapPlugin implements SmartLifecycle {
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.history'}"
             ))
-    public List<Observation> fromAmqpHistoryResource(Message<?> msg) {
+    public RapPluginResponse fromAmqpHistoryResource(Message<?> msg) {
         LOG.debug("reading history resource: {}", msg.getPayload());
         
         try {
@@ -138,15 +144,18 @@ public class RapPlugin implements SmartLifecycle {
                     internalId = internalIdTemp;
             }
             List<Observation> observationList = doReadResourceHistory(internalId);
-            return observationList;
+            return new RapPluginOkResponse(observationList);
         } catch (Exception e) {
-            if(msg.getPayload() instanceof byte[])
-                LOG.error("Can not read history Observation for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8), e);
-            else
-                LOG.error("Can not read history Observation for request: " + msg.getPayload(), e);
+            if(msg.getPayload() instanceof byte[]) {
+                String errorMsg = "Can not read history Observation for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8);
+                LOG.error(errorMsg, e);
+                return new RapPluginErrorResponse(500, errorMsg + "\n" + e.getMessage());
+            } else {
+                String errorMsg = "Can not read history Observation for request: " + msg.getPayload();
+                LOG.error(errorMsg, e);
+                return new RapPluginErrorResponse(500, errorMsg + "\n" + e.getMessage());
+            }
         }
-        
-        return new LinkedList<>();
     }
     
     @RabbitListener(bindings = @QueueBinding(

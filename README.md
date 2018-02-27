@@ -26,24 +26,22 @@ or add following for specific version:
 
 `compile('com.github.symbiote-h2020:ResourceAccessProxyPlugin:{version}')`
 
-Current version is `1.1.0`.
+Current version is `1.0.0`.
 
 This is dependency from jitpack repository. 
 In order to use jitpack you need to put in `build.gradle` 
 following lines as well:
 
 ```
-allprojects {
-	repositories {
-		jcenter()
-		maven { url "https://jitpack.io" }
-	}
+repositories {
+	jcenter()
+	maven { url "https://jitpack.io" } // this is important to add
 }
 ```
 
 ### 3. Setting configuration
 
-Configuration needs to be put in `bootstrap.properties` or YMl file. An example is here:
+Configuration needs to be put in `application.properties` or YMl file. An example is here:
 
 ```
 spring.application.name=RapPluginExample
@@ -95,27 +93,27 @@ historical observed values which are returned.
 
 In the case that reading is not possible method should return `null`.
 
-Here is example of registering and handling faked values:
+Here is example of registering and handling faked values for resource with internal id `iid1`:
 
 ```java
 rapPlugin.registerReadingResourceListener(new ReadingResourceListener() {
     
     @Override
     public List<Observation> readResourceHistory(String resourceId) {
-        if("1000".equals(resourceId))
-            return new ArrayList<>(Arrays.asList(createObservation(resourceId), createObservation(resourceId)));
+        if("iid1".equals(resourceId))
+            return new ArrayList<>(Arrays.asList(createObservation(resourceId), createObservation(resourceId), createObservation(resourceId)));
 
         return null;
     }
     
     @Override
     public List<Observation> readResource(String resourceId) {
-        if("1000".equals(resourceId)) {
+        if("iid1".equals(resourceId)) {
             Observation o = createObservation(resourceId);
             return new ArrayList<>(Arrays.asList(o));
         }
             
-        return null;
+        return null;            
     }
 });
 ```
@@ -174,3 +172,39 @@ or
 `java -jar build/libs/RapPluginExample-0.0.1-SNAPSHOT.jar`
 
 Note: In order to function correctly you need to start RabbitMQ and RAP component before.
+
+## Appendix
+### createObservation method
+```
+public Observation createObservation(String sensorId) {        
+    Location loc = new WGS84Location(15.9, 45.8, 145, "Spansko", Arrays.asList("City of Zagreb"));
+    
+    TimeZone zoneUTC = TimeZone.getTimeZone("UTC");
+    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    dateFormat.setTimeZone(zoneUTC);
+    Date date = new Date();
+    String timestamp = dateFormat.format(date);
+    
+    long ms = date.getTime() - 1000;
+    date.setTime(ms);
+    String samplet = dateFormat.format(date);
+    
+    ObservationValue obsval = 
+            new ObservationValue(
+                    "7", 
+                    new Property("Temperature", Arrays.asList("Air temperature")), 
+                    new UnitOfMeasurement("C", "degree Celsius", null));
+    ArrayList<ObservationValue> obsList = new ArrayList<>();
+    obsList.add(obsval);
+    
+    Observation obs = new Observation(sensorId, loc, timestamp, samplet , obsList);
+    
+    try {
+        LOG.debug("Observation: \n{}", new ObjectMapper().writeValueAsString(obs));
+    } catch (JsonProcessingException e) {
+        LOG.error("Can not convert observation to JSON", e);
+    }
+    
+    return obs;
+}
+```

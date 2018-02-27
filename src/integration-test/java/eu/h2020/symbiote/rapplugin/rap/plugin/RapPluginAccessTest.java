@@ -51,6 +51,8 @@ import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSetMes
 import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
 import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
+import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
+import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapDefinitions;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ReadingResourceListener;
@@ -160,10 +162,11 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     
         //then
         assertNotNull(returnedObject);
-        assertThat(returnedObject).isInstanceOf(List.class);
+        assertThat(returnedObject).isInstanceOf(RapPluginErrorResponse.class);
         
-        List<Observation> returnedObservations = (List<Observation>)returnedObject;
-        assertThat(returnedObservations).isEmpty();
+        RapPluginErrorResponse errorResponse = (RapPluginErrorResponse)returnedObject;
+        assertThat(errorResponse.getResponseCode()).isEqualTo(500);
+        assertThat(errorResponse.getMessage()).isNotEmpty();
     }
 
 
@@ -188,7 +191,9 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         //then
         assertThat(receivedMessage).isNotNull();
 
-        List<Observation> returnedObservations = new ObjectMapper().readValue(receivedMessage.getBody(), new TypeReference<List<Observation>>() { });
+        RapPluginOkResponse okResponse = new ObjectMapper().readValue(receivedMessage.getBody(), new TypeReference<RapPluginOkResponse>() { });
+        assertThat(okResponse.getBody()).isInstanceOf(List.class);
+        List<Observation> returnedObservations = (List<Observation>) okResponse.getBody();
         assertThat(returnedObservations)
             .hasSize(1)
             .extracting(Observation::getResourceId)
@@ -213,10 +218,11 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     
         //then
         assertNotNull(returnedObject);
-        assertThat(returnedObject).isInstanceOf(List.class);
+        assertThat(returnedObject).isInstanceOf(RapPluginErrorResponse.class);
         
-        List<Observation> returnedObservations = (List<Observation>) returnedObject;
-        assertThat(returnedObservations).isEmpty();
+        RapPluginErrorResponse errResponse = (RapPluginErrorResponse) returnedObject;
+        assertThat(errResponse.getResponseCode()).isEqualTo(500);
+        assertThat(errResponse.getMessage()).isNotEmpty();
     }
 
     @Test @DirtiesContext
@@ -239,8 +245,10 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         //then
         assertNotNull(receivedMessage);
         
-        List<Observation> returnedObservations = mapper.readValue(receivedMessage.getBody(), 
-                new TypeReference<List<Observation>>() { });
+        RapPluginOkResponse okResponse = mapper.readValue(receivedMessage.getBody(), 
+                RapPluginOkResponse.class);
+        assertThat(okResponse.getBody()).isInstanceOf(List.class);
+        List<Observation> returnedObservations = (List<Observation>) okResponse.getBody();
         assertThat(returnedObservations)
             .hasSize(2)
             .extracting(Observation::getResourceId)

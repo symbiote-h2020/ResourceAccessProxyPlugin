@@ -6,15 +6,10 @@ public class WrongResponseException extends RuntimeException {
     private static final long serialVersionUID = 3072896250414289567L;
 
     @Getter
-    private Object response;
+    private RapPluginErrorResponse response;
 
-    public WrongResponseException(Object response) {
-        super();
-        this.response = response;
-    }
-
-    public WrongResponseException(String message, Object response) {
+    public WrongResponseException(int responseCode, String message) {
         super(message);
-        this.response = response;
+        response = new RapPluginErrorResponse(responseCode, message);
     }
 }
