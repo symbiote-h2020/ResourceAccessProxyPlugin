@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '1.5.9.RELEASE'
+        springBootVersion = '1.5.10.RELEASE'
     }
     repositories {
         mavenCentral()
@@ -13,7 +13,7 @@ buildscript {
 plugins {
     id 'java'
     id 'io.franzbecker.gradle-lombok' version '1.8'
-    id 'org.springframework.boot' version '1.5.9.RELEASE'
+    id 'org.springframework.boot' version '1.5.10.RELEASE'
 
     // code quality
     id "jacoco"
@@ -28,7 +28,7 @@ plugins {
 }
 
 group = 'eu.h2020.symbiote'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.1'
 
 // this is needed for starter to not create fat jar
 bootRepackage.enabled = false
