@@ -1,9 +1,10 @@
 package eu.h2020.symbiote.rapplugin.messaging.rap;
 
 import java.util.List;
+import java.util.Map;
 
-import eu.h2020.symbiote.cloud.model.data.InputParameter;
 import eu.h2020.symbiote.cloud.model.data.Result;
+import eu.h2020.symbiote.rapplugin.domain.Capability;
 
 public interface WritingToResourceListener {
     /**  
@@ -15,5 +16,5 @@ public interface WritingToResourceListener {
      * @param parameters service/actuation parameters
      * @return service result for calling service and for actuation null if actuation is triggered
      */
-    Result<Object> writeResource(String resourceId, List<InputParameter> parameters);
+    Result<Object> writeResource(String resourceId, Map<String,Capability> parameters);
 }

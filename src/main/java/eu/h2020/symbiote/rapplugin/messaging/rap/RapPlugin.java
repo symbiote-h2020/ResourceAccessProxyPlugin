@@ -7,8 +7,12 @@ package eu.h2020.symbiote.rapplugin.messaging.rap;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +43,8 @@ import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessUnSubs
 import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
 import eu.h2020.symbiote.enabler.messaging.model.rap.registration.RegisterPluginMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.registration.UnregisterPluginMessage;
+import eu.h2020.symbiote.rapplugin.domain.Capability;
+import eu.h2020.symbiote.rapplugin.domain.Parameter;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
@@ -75,6 +81,8 @@ public class RapPlugin implements SmartLifecycle {
 
     private NotificationResourceListener notificationResourceListener;
     
+    private ObjectMapper mapper;
+    
     @Autowired
     public RapPlugin(RabbitManager rabbitManager, RapPluginProperties props) {
         this(rabbitManager, 
@@ -90,6 +98,8 @@ public class RapPlugin implements SmartLifecycle {
         this.enablerName = enablerName;
         this.filtersSupported = filtersSupported;
         this.notificationsSupported = notificationsSupported;
+        
+        mapper = new ObjectMapper();
     }
 
     @RabbitListener(bindings = @QueueBinding(
@@ -163,8 +173,8 @@ public class RapPlugin implements SmartLifecycle {
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.set'}"
             ))
-    public Result<Object> fromAmqpSetResource(Message<?> msg) {
-        LOG.debug("reading history resource: {}", msg.getPayload());
+    public RapPluginResponse fromAmqpSetResource(Message<?> msg) {
+        LOG.debug("actuating resource: {}", msg.getPayload());
         
         try {
             ResourceAccessSetMessage msgSet = deserializeRequest(msg, ResourceAccessSetMessage.class);
@@ -177,19 +187,45 @@ public class RapPlugin implements SmartLifecycle {
                     internalId = internalIdTemp;
             }
             
-            List<InputParameter> parameters = new ObjectMapper().readValue(msgSet.getBody(), new TypeReference<List<InputParameter>>() { });
-            Result<Object> result = doWriteResource(internalId, parameters);
-            if(result.getValue() == null) return null;
+            Map<String,Capability> parameters = extractCapabilities(msgSet);
             
-            return result;
+            doWriteResource(internalId, parameters);
+            return new RapPluginOkResponse();
         } catch (Exception e) {
-            if(msg.getPayload() instanceof byte[])
-                LOG.error("Can not set/call service for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8), e);
-            else
-                LOG.error("Can not set/call service for request: " + msg.getPayload(), e);
+            if(msg.getPayload() instanceof byte[]) {
+                String responseMsg = "Can not set/call service for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8);
+                LOG.error(responseMsg, e);
+                return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage()); 
+            } else {
+                String responseMsg = "Can not set/call service for request: " + msg.getPayload();
+                LOG.error(responseMsg, e);
+                return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
+            }
+        }
+    }
+
+    private Map<String,Capability> extractCapabilities(ResourceAccessSetMessage msgSet)
+            throws IOException, JsonParseException, JsonMappingException {
+        Map<String,Capability> capabilitiesList = new HashMap<>();
+        
+        HashMap<String,ArrayList<HashMap<String, Object>>> capabilityMap = 
+                mapper.readValue(msgSet.getBody(), new TypeReference<HashMap<String,ArrayList<HashMap<String, Object>>>>() { });
+        for(Entry<String, ArrayList<HashMap<String,Object>>> capabilityEntry: capabilityMap.entrySet()) {
+            LOG.debug("Found capability {}", capabilityEntry.getKey());
+            LOG.debug(" There are {} parameters.", capabilityEntry.getValue().size());
+            Capability capability = new Capability(capabilityEntry.getKey());
+            capabilitiesList.put(capability.getName(), capability);
+            for(HashMap<String, Object> parameterMap: capabilityEntry.getValue()) {
+                for(Entry<String, Object> parameter: parameterMap.entrySet()) {
+                    LOG.debug(" paramName: {}", parameter.getKey());
+                    LOG.debug(" paramValueType: {} value: {}\n", parameter.getValue().getClass().getName(), parameter.getValue());
+                    Parameter inputParameter = new Parameter(parameter.getKey(), parameter.getValue());
+                    capability.addParameter(inputParameter);
+                }
+            }
         }
         
-        return null;
+        return capabilitiesList;
     }
 
 
@@ -203,7 +239,6 @@ public class RapPlugin implements SmartLifecycle {
         else
             throw new RuntimeException("Can not cast payload to byte[] or string. Payload is of type " + 
                     msg.getPayload().getClass().getName() + ". Payload: " + msg.getPayload());
-        ObjectMapper mapper = new ObjectMapper();
         O obj = mapper.readValue(stringMsg, clazz);
         return obj;
     }
@@ -213,7 +248,6 @@ public class RapPlugin implements SmartLifecycle {
     public String receiveMessage(String message) {
         String json = null;
         try {            
-            ObjectMapper mapper = new ObjectMapper();
             ResourceAccessMessage msg = mapper.readValue(message, ResourceAccessMessage.class);
             ResourceAccessMessage.AccessType access = msg.getAccessType();
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
@@ -301,11 +335,11 @@ public class RapPlugin implements SmartLifecycle {
         this.writingToResourceListener = null;
     }
 
-    public Result<Object> doWriteResource(String resourceId, List<InputParameter> parameters) {
+    public Result<Object> doWriteResource(String resourceId, Map<String,Capability> capabilities) {
         if(writingToResourceListener == null)
             throw new RuntimeException("WritingToResourceListener not registered in RapPlugin");
                     
-        return writingToResourceListener.writeResource(resourceId, parameters);
+        return writingToResourceListener.writeResource(resourceId, capabilities);
     }
 
     public void registerNotificationResourceListener(NotificationResourceListener listener) {

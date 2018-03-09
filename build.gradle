@@ -28,7 +28,7 @@ plugins {
 }
 
 group = 'eu.h2020.symbiote'
-version = '0.1.1'
+version = '0.2.1-SNAPSHOT'
 
 // this is needed for starter to not create fat jar
 bootRepackage.enabled = false
@@ -86,6 +86,7 @@ dependencies {
     compile('org.hibernate:hibernate-validator')
     
 
+    //compile('com.github.symbiote-h2020:SymbIoTeSecurity:24.2.0') { changing = true }
     //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.+') { changing = true }
     compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.+') { changing = true }
     
