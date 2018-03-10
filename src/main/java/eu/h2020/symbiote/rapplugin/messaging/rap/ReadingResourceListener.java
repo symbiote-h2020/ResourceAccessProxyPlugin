@@ -4,6 +4,13 @@ import java.util.List;
 
 import eu.h2020.symbiote.model.cim.Observation;
 
+/**
+ * Listener for reading resources. 
+ * 
+ * 
+ * @author Mario Kušek <mario.kusek@fer.hr>
+ *
+ */
 public interface ReadingResourceListener {
     /**  
      * This method is called when DSI/RAP is asking for resource data.

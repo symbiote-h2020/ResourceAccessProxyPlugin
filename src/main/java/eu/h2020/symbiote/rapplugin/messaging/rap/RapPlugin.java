@@ -53,7 +53,8 @@ import eu.h2020.symbiote.model.cim.Observation;
 import lombok.Getter;
 
 /**
- * This is class that handles requests from RAP.
+ * This is Spring component that handles requests from RAP. You can register different
+ * listeners in this component. If you need reference to this component just autowire it.
  * 
  * @author Matteo Pardi <m.pardi@nextworks.it>
  * @author Mario Kušek <mario.kusek@fer.hr>
@@ -103,6 +104,11 @@ public class RapPlugin implements SmartLifecycle {
         mapper = new ObjectMapper();
     }
 
+    /**
+     * Called when RabbitMQ message for reading resource arrives. 
+     * @param msg AMQP message
+     * @return response of reading resource
+     */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue,
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
@@ -138,6 +144,11 @@ public class RapPlugin implements SmartLifecycle {
         }
     }
 
+    /**
+     * Called when RabbitMQ message for reading resource history arrives.
+     * @param msg AMQP message
+     * @return response of reading history
+     */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue,
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
@@ -173,6 +184,11 @@ public class RapPlugin implements SmartLifecycle {
         }
     }
     
+    /**
+     * Called when RabbitMQ message for actuating or invoking service request arrives.
+     * @param msg request with parameters
+     * @return response of actuating or invoking service
+     */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue,
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
@@ -271,7 +287,7 @@ public class RapPlugin implements SmartLifecycle {
         return obj;
     }
 
-    
+    // TODO removed eventualy (when all feature will be implemented) because it is not used 
     // class which sends this is ResourceAccessRestController
     public String receiveMessage(String message) {
         String json = null;
@@ -333,14 +349,30 @@ public class RapPlugin implements SmartLifecycle {
         }
     }
     
+    /**
+     * Registers listener for reading resource.
+     * 
+     * @param listener
+     */
     public void registerReadingResourceListener(ReadingResourceListener listener) {
         this.readingResourceListener = listener;
     }
 
+    /**
+     * Unregisters listener for reading resource.
+     * 
+     * @param listener
+     */
     public void unregisterReadingResourceListener(ReadingResourceListener listener) {
         this.readingResourceListener = null;
     }
 
+    /**
+     * Execute reading resource. 
+     * 
+     * @param resourceId internal resource id
+     * @return list of observation with one element
+     */
     public List<Observation> doReadResource(String resourceId) {
         if(readingResourceListener == null)
             throw new RuntimeException("ReadingResourceListener not registered in RapPlugin");
@@ -348,6 +380,12 @@ public class RapPlugin implements SmartLifecycle {
         return readingResourceListener.readResource(resourceId);
     }
     
+    /**
+     * Executes reading history of observations. Max number of observations is 100.
+     * 
+     * @param resourceId internal resource id
+     * @return list of observations (max. 100 values)
+     */
     public List<Observation> doReadResourceHistory(String resourceId) {
         if(readingResourceListener == null)
             throw new RuntimeException("ReadingResourceListener not registered in RapPlugin");
@@ -355,14 +393,31 @@ public class RapPlugin implements SmartLifecycle {
         return readingResourceListener.readResourceHistory(resourceId);
     }
     
+    /**
+     * Registers listener for actuating resource.
+     * 
+     * @param listener
+     */
     public void registerActuatingResourceListener(ActuatingResourceListener listener) {
         this.actuatingResourceListener = listener;
     }
 
+    /**
+     * Unregisters listener for actuating resource.
+     * 
+     * @param listener
+     */
     public void unregisterActuatingResourceListener(ActuatingResourceListener listener) {
         this.actuatingResourceListener = null;
     }
 
+    /**
+     * Executes actuation of resources.
+     * 
+     * @param resourceId internal resource id
+     * @param capabilities map of capabilities. Key is capability name and value is capability 
+     * object with parameters.
+     */
     public void doActuateResource(String resourceId, Map<String,Capability> capabilities) {
         if(actuatingResourceListener == null)
             throw new RuntimeException("ActuatingResourceListener not registered in RapPlugin");
@@ -370,14 +425,31 @@ public class RapPlugin implements SmartLifecycle {
         actuatingResourceListener.actuateResource(resourceId, capabilities);
     }
     
+    /**
+     * Registers listener for invonking service.
+     * 
+     * @param invokingServiceListener
+     */
     public void registerInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
         this.invokingServiceListener = invokingServiceListener;
     }
 
+    /**
+     * Unregisters listener for invoking service.
+     * 
+     * @param invokingServiceListener
+     */
     public void unregisterInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
         this.invokingServiceListener = null;       
     }
     
+    /**
+     * Executes invoking service.
+     * 
+     * @param internalId internal resource id
+     * @param parameters map of parameters. Key is paremeter name and value is parameter.
+     * @return result of invoking service
+     */
     public Object doInvokeService(String internalId, Map<String, Parameter> parameters) {
         if(invokingServiceListener == null)
             throw new RuntimeException("InvokingServiceListener not registered in RapPlugin");
@@ -385,14 +457,29 @@ public class RapPlugin implements SmartLifecycle {
         return invokingServiceListener.invokeService(internalId, parameters);
     }
 
+    /**
+     * Registers listener for notification when resource observation is changed.
+     * 
+     * @param listener
+     */
     public void registerNotificationResourceListener(NotificationResourceListener listener) {
         this.notificationResourceListener = listener;
     }
 
+    /**
+     * Unregisters notification listener.
+     * 
+     * @param listener
+     */
     public void unregisterNotificationResourceListener(NotificationResourceListener listener) {
         this.notificationResourceListener = null;
     }
 
+    /**
+     * Initiate client subscription for notification of some resource observation change.
+     * 
+     * @param resourceId internal resource id
+     */
     public void doSubscribeResource(String resourceId) {
         if(notificationResourceListener == null)
             throw new RuntimeException("NotificationResourceListener not registered in RapPlugin");
@@ -400,6 +487,11 @@ public class RapPlugin implements SmartLifecycle {
         notificationResourceListener.subscribeResource(resourceId);
     }
     
+    /**
+     * Unsubscribe on notification of resource observation change.
+     * 
+     * @param resourceId internal resource id
+     */
     public void doUnsubscribeResource(String resourceId) {
         if(notificationResourceListener == null)
             throw new RuntimeException("NotificationResourceListener not registered in RapPlugin");
