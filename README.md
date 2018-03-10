@@ -8,7 +8,9 @@
 
 The idea of RAP Plugin is to use it as dependency in implementation that connects your platform with SymbIoTe. 
 Generic parts like RabbitMQ communication with RAP component is implemented in this library. 
-That way a developer doesn't have to implement complex communication. 
+That way a developer doesn't have to implement complex communication.
+
+Example of project using RAP plugin starter is in following repository [https://github.com/symbiote-h2020/RapPluginExample](https://github.com/symbiote-h2020/RapPluginExample)
 
 ## Creating concrete plugin
 
