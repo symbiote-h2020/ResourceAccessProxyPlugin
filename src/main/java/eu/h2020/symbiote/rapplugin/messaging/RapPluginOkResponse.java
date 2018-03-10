@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.h2020.symbiote.model.cim.Observation;
+import eu.h2020.symbiote.rapplugin.messaging.rap.RapPluginException;
 
 public class RapPluginOkResponse extends RapPluginResponse {
     private Object body;
@@ -17,7 +18,7 @@ public class RapPluginOkResponse extends RapPluginResponse {
         setResponseCode(204);
     }
     
-    public RapPluginOkResponse(Object body) throws WrongResponseException {
+    public RapPluginOkResponse(Object body) throws RapPluginException {
         setBody(body);
         if(body == null)
             setResponseCode(204);
@@ -25,7 +26,7 @@ public class RapPluginOkResponse extends RapPluginResponse {
             setResponseCode(200);
     }
     
-    public RapPluginOkResponse(int responseCode, Object body) throws WrongResponseException {
+    public RapPluginOkResponse(int responseCode, Object body) throws RapPluginException {
         setBody(body);
         setResponseCode(responseCode);
     }
@@ -37,7 +38,7 @@ public class RapPluginOkResponse extends RapPluginResponse {
         super.setResponseCode(responseCode);
     }
 
-    public void setBody(Object body) throws WrongResponseException {
+    public void setBody(Object body) throws RapPluginException {
         if(body instanceof LinkedHashMap || body instanceof List)
            tryToParseObservationOrListOfObsrvation(body);
         else 
@@ -83,12 +84,12 @@ public class RapPluginOkResponse extends RapPluginResponse {
     }
 
     @Override
-    public String getContent() throws WrongResponseException {
+    public String getContent() throws RapPluginException {
         ObjectMapper mapper = new ObjectMapper();
         try {
             return mapper.writeValueAsString(body);
         } catch (JsonProcessingException e) {
-            throw new WrongResponseException(500, "Content of body can not be serialized to JSON in RAP plugin. Body is of type " + body.getClass().getName());
+            throw new RapPluginException(500, "Content of body can not be serialized to JSON in RAP plugin. Body is of type " + body.getClass().getName());
         }
     }
 }

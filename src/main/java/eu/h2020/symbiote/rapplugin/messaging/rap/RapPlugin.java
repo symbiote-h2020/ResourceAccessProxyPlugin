@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -77,9 +76,11 @@ public class RapPlugin implements SmartLifecycle {
 
     private ReadingResourceListener readingResourceListener;
 
-    private WritingToResourceListener writingToResourceListener;
+    private ActuatingResourceListener actuatingResourceListener;
 
     private NotificationResourceListener notificationResourceListener;
+    
+    private InvokingServiceListener invokingServiceListener;
     
     private ObjectMapper mapper;
     
@@ -122,6 +123,8 @@ public class RapPlugin implements SmartLifecycle {
             }
             List<Observation> observationList = doReadResource(internalId);
             return new RapPluginOkResponse(observationList);
+        } catch (RapPluginException e) {
+            return e.getResponse();
         } catch (Exception e) {
             if(msg.getPayload() instanceof byte[]) {
                 String responseMsg = "Can not read Observation for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8);
@@ -155,6 +158,8 @@ public class RapPlugin implements SmartLifecycle {
             }
             List<Observation> observationList = doReadResourceHistory(internalId);
             return new RapPluginOkResponse(observationList);
+        } catch (RapPluginException e) {
+            return e.getResponse();
         } catch (Exception e) {
             if(msg.getPayload() instanceof byte[]) {
                 String errorMsg = "Can not read history Observation for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8);
@@ -181,16 +186,39 @@ public class RapPlugin implements SmartLifecycle {
             
             List<ResourceInfo> resInfoList = msgSet.getResourceInfo();
             String internalId = null;
+            String type = null;
             for(ResourceInfo resInfo: resInfoList){
                 String internalIdTemp = resInfo.getInternalId();
-                if(internalIdTemp != null && !internalIdTemp.isEmpty())
+                if(internalIdTemp != null && !internalIdTemp.isEmpty()) {
                     internalId = internalIdTemp;
+                    type = resInfo.getType();
+                }
             }
             
-            Map<String,Capability> parameters = extractCapabilities(msgSet);
-            
-            doWriteResource(internalId, parameters);
-            return new RapPluginOkResponse();
+            if("Actuator".equals(type)) {
+                Map<String,Capability> parameters = extractCapabilities(msgSet);
+                doActuateResource(internalId, parameters);
+                return new RapPluginOkResponse();
+            } else {
+                // service
+                ArrayList<HashMap<String, Object>> jsonObject = 
+                        mapper.readValue(msgSet.getBody(), new TypeReference<ArrayList<HashMap<String, Object>>>() { });
+                Map<String, Parameter> parameters = new HashMap<>();
+                for(HashMap<String,Object> parametersMap: jsonObject) {
+                    for(Entry<String, Object> parameter: parametersMap.entrySet()) {
+                        Parameter p = new Parameter(parameter.getKey(), parameter.getValue());
+                        parameters.put(p.getName(), p);
+                    }
+                }
+                Object result = doInvokeService(internalId, parameters);
+                if(result == null)
+                    return new RapPluginOkResponse();
+                else
+                    return new RapPluginOkResponse(result);
+                
+            }
+        } catch (RapPluginException e) {
+            return e.getResponse();
         } catch (Exception e) {
             if(msg.getPayload() instanceof byte[]) {
                 String responseMsg = "Can not set/call service for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8);
@@ -327,19 +355,34 @@ public class RapPlugin implements SmartLifecycle {
         return readingResourceListener.readResourceHistory(resourceId);
     }
     
-    public void registerWritingToResourceListener(WritingToResourceListener listener) {
-        this.writingToResourceListener = listener;
+    public void registerActuatingResourceListener(ActuatingResourceListener listener) {
+        this.actuatingResourceListener = listener;
     }
 
-    public void unregisterWritingToResourceListener(WritingToResourceListener listener) {
-        this.writingToResourceListener = null;
+    public void unregisterActuatingResourceListener(ActuatingResourceListener listener) {
+        this.actuatingResourceListener = null;
     }
 
-    public Result<Object> doWriteResource(String resourceId, Map<String,Capability> capabilities) {
-        if(writingToResourceListener == null)
-            throw new RuntimeException("WritingToResourceListener not registered in RapPlugin");
+    public void doActuateResource(String resourceId, Map<String,Capability> capabilities) {
+        if(actuatingResourceListener == null)
+            throw new RuntimeException("ActuatingResourceListener not registered in RapPlugin");
                     
-        return writingToResourceListener.writeResource(resourceId, capabilities);
+        actuatingResourceListener.actuateResource(resourceId, capabilities);
+    }
+    
+    public void registerInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
+        this.invokingServiceListener = invokingServiceListener;
+    }
+
+    public void unregisterInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
+        this.invokingServiceListener = null;       
+    }
+    
+    public Object doInvokeService(String internalId, Map<String, Parameter> parameters) {
+        if(invokingServiceListener == null)
+            throw new RuntimeException("InvokingServiceListener not registered in RapPlugin");
+                    
+        return invokingServiceListener.invokeService(internalId, parameters);
     }
 
     public void registerNotificationResourceListener(NotificationResourceListener listener) {

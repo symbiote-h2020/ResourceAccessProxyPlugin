@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -59,7 +60,7 @@ import eu.h2020.symbiote.rapplugin.messaging.RapPluginResponse;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapDefinitions;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ReadingResourceListener;
-import eu.h2020.symbiote.rapplugin.messaging.rap.WritingToResourceListener;
+import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatingResourceListener;
 import eu.h2020.symbiote.rapplugin.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
 import eu.h2020.symbiote.rapplugin.properties.RapProperties;
@@ -263,12 +264,12 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     @Test @DirtiesContext
     public void sendingResourceAccessSetMessageForActuation_whenExceptionInPlugin_shouldReturnNull() throws Exception {
         //given
-        WritingToResourceListener writingListener = Mockito.mock(WritingToResourceListener.class);
+        ActuatingResourceListener writingListener = Mockito.mock(ActuatingResourceListener.class);
         
         Map<String, Capability> parameterList = createCapabilityMap(newCapability("capability1", "name1", "value1"),
                 newCapability("capability2", "name2", "value2"));
-        when(writingListener.writeResource(getInternalId(), parameterList)).thenThrow(new RuntimeException("exception message"));
-        rapPlugin.registerWritingToResourceListener(writingListener);
+        doThrow(new RuntimeException("exception message")).when(writingListener).actuateResource(getInternalId(), parameterList);
+        rapPlugin.registerActuatingResourceListener(writingListener);
         
         List<ResourceInfo> infoList = Arrays.asList(new ResourceInfo(getSymbioteId(), getInternalId()));
         String body = mapper.writeValueAsString(parameterList);
@@ -284,7 +285,6 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         assertThat(returnedObject).isInstanceOf(RapPluginErrorResponse.class);
         RapPluginResponse response = (RapPluginErrorResponse) returnedObject;
         assertThat(response.getResponseCode()).isEqualTo(500);
-        assertThat(response.getContent()).isNotEmpty();
     }
 
     private Map<String, Capability> createCapabilityMap(Capability... capabilities) {

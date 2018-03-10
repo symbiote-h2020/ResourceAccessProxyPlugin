@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import eu.h2020.symbiote.rapplugin.messaging.rap.RapPluginException;
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = RapPluginOkResponse.class),
@@ -28,7 +30,7 @@ public abstract class RapPluginResponse {
         this.responseCode = responseCode;
     }
     
-    public abstract String getContent() throws WrongResponseException;
+    public abstract String getContent() throws RapPluginException;
 
     @Override
     public int hashCode() {

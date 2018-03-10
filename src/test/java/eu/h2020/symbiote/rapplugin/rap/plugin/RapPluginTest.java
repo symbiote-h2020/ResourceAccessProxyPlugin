@@ -17,7 +17,8 @@ import eu.h2020.symbiote.model.cim.Observation;
 import eu.h2020.symbiote.rapplugin.messaging.rap.NotificationResourceListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ReadingResourceListener;
-import eu.h2020.symbiote.rapplugin.messaging.rap.WritingToResourceListener;
+import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatingResourceListener;
+import eu.h2020.symbiote.rapplugin.messaging.rap.InvokingServiceListener;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RapPluginTest {
@@ -26,7 +27,10 @@ public class RapPluginTest {
     private ReadingResourceListener readingListener;
     
     @Mock
-    private WritingToResourceListener writingListener;
+    private ActuatingResourceListener actuatingListener;
+
+    @Mock
+    private InvokingServiceListener invokingServiceListener;
 
     @Mock
     private NotificationResourceListener notificationListener;
@@ -118,11 +122,11 @@ public class RapPluginTest {
         
         assertThatThrownBy(() -> {
             // when
-            plugin.doWriteResource("resourceId", null);
+            plugin.doActuateResource("resourceId", null);
         })
             //then
             .isInstanceOf(RuntimeException.class)
-            .hasMessage("WritingToResourceListener not registered in RapPlugin")
+            .hasMessage("ActuatingResourceListener not registered in RapPlugin")
             .hasNoCause();
     }
 
@@ -130,32 +134,76 @@ public class RapPluginTest {
     public void callingWritingResourceWhenUnregisteredListener_shouldThrowException() throws Exception {
         //given
         RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
-        plugin.registerWritingToResourceListener(writingListener);
-        plugin.unregisterWritingToResourceListener(writingListener);
+        plugin.registerActuatingResourceListener(actuatingListener);
+        plugin.unregisterActuatingResourceListener(actuatingListener);
         
         assertThatThrownBy(() -> {
             // when
-            plugin.doWriteResource("resourceId", null);
+            plugin.doActuateResource("resourceId", null);
         })
         //then
         .isInstanceOf(RuntimeException.class)
-        .hasMessage("WritingToResourceListener not registered in RapPlugin")
+        .hasMessage("ActuatingResourceListener not registered in RapPlugin")
         .hasNoCause();
     }
     
     @Test
-    public void registeringAndCallingWritingResource_shouldCallListener() throws Exception {
+    public void registeringAndCallingActuatingResource_shouldCallListener() throws Exception {
         //given
         RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
-        Result<Object> expectedResult = new Result<>();
-        when(writingListener.writeResource("resourceId", null)).thenReturn(expectedResult);
-        plugin.registerWritingToResourceListener(writingListener);
+        plugin.registerActuatingResourceListener(actuatingListener);
         
         // when
-        Result<Object> result = plugin.doWriteResource("resourceId", null);
+        plugin.doActuateResource("resourceId", null);
         
         //then
-        assertThat(result).isSameAs(expectedResult);
+    }
+
+    @Test
+    public void callingInvokingServiceWhenNotRegisteredListener_shouldThrowException() throws Exception {
+        //given
+        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        
+        assertThatThrownBy(() -> {
+            // when
+            plugin.doInvokeService("resourceId", null);
+        })
+            //then
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("InvokingServiceListener not registered in RapPlugin")
+            .hasNoCause();
+    }
+
+    @Test
+    public void callingInvokingServiceWhenUnregisteredListener_shouldThrowException() throws Exception {
+        //given
+        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        plugin.registerInvokingServiceListener(invokingServiceListener);
+        plugin.unregisterInvokingServiceListener(invokingServiceListener);
+        
+        assertThatThrownBy(() -> {
+            // when
+            plugin.doInvokeService("resourceId", null);
+        })
+        //then
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("InvokingServiceListener not registered in RapPlugin")
+        .hasNoCause();
+    }
+
+    @Test
+    public void registeringAndCallingInvokingService_shouldCallListener() throws Exception {
+        //given
+        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        Object expectedResult = new Object();
+        plugin.registerInvokingServiceListener(invokingServiceListener);
+        when(invokingServiceListener.invokeService("resourceId", null)).thenReturn(expectedResult);
+        
+        // when
+        Object result = plugin.doInvokeService("resourceId", null);
+        
+        //then
+        assertThat(result).isEqualTo(expectedResult);
     }
 
     @Test
