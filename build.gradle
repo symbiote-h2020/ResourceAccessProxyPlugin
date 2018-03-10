@@ -88,7 +88,8 @@ dependencies {
 
     //compile('com.github.symbiote-h2020:SymbIoTeSecurity:24.2.0') { changing = true }
     //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.+') { changing = true }
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.+') { changing = true }
+    //compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.+') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:capability-name-SNAPSHOT')
     
     compileOnly('org.projectlombok:lombok')
 

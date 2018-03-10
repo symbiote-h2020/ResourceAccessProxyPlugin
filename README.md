@@ -112,11 +112,10 @@ rapPlugin.registerReadingResourceListener(new ReadingResourceListener() {
     }
     
     @Override
-    public List<Observation> readResource(String resourceId) {
+    public Observation readResource(String resourceId) {
         if("isen1".equals(resourceId)) {
             // This is place to put reading data from sensor 
-            Observation o = createObservation(resourceId);
-            return new ArrayList<>(Arrays.asList(o));
+            return createObservation(resourceId);
         }
             
         throw new RapPluginException(404, "Sensor not found.");
