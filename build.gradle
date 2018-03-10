@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '1.5.9.RELEASE'
+        springBootVersion = '1.5.10.RELEASE'
     }
     repositories {
         mavenCentral()
@@ -13,7 +13,7 @@ buildscript {
 plugins {
     id 'java'
     id 'io.franzbecker.gradle-lombok' version '1.8'
-    id 'org.springframework.boot' version '1.5.9.RELEASE'
+    id 'org.springframework.boot' version '1.5.10.RELEASE'
 
     // code quality
     id "jacoco"
@@ -28,7 +28,7 @@ plugins {
 }
 
 group = 'eu.h2020.symbiote'
-version = '0.0.1-SNAPSHOT'
+version = '0.3.0'
 
 // this is needed for starter to not create fat jar
 bootRepackage.enabled = false
@@ -82,15 +82,14 @@ configurations.all {
 
 dependencies {
     compile('org.springframework.boot:spring-boot-starter')
-    compile('org.springframework.cloud:spring-cloud-starter-config')
-    compile('org.springframework.cloud:spring-cloud-starter-eureka')
-    compile('org.springframework.cloud:spring-cloud-starter-zipkin') // Causes the java.net.ConnectException if Zipkin offline
-    compile('org.springframework.cloud:spring-cloud-starter-feign')
     compile('org.springframework.boot:spring-boot-starter-amqp')
-    compile('org.springframework.boot:spring-boot-starter-data-rest')
+    compile('org.hibernate:hibernate-validator')
+    
 
-    compile('eu.h2020.symbiote:SymbIoTeLibraries:4.+') { changing = true }
-    //compile('com.github.symbiote-h2020:SymbIoTeLibraries:4.+') { changing = true }
+    //compile('com.github.symbiote-h2020:SymbIoTeSecurity:24.2.0') { changing = true }
+    //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.+') { changing = true }
+    //compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.+') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:capability-name-SNAPSHOT')
     
     compileOnly('org.projectlombok:lombok')
 
@@ -99,7 +98,6 @@ dependencies {
     testCompile('com.revinate:assertj-json:1.0.1')
     testCompile('io.arivera.oss:embedded-rabbitmq:1.1.2')
     testCompile('org.springframework.cloud:spring-cloud-contract-wiremock')
-    
 }
 
 dependencyManagement {
@@ -113,7 +111,6 @@ task sourceJar(type: Jar) {
     from sourceSets.main.allJava
     baseName = 'rap-plugin'
     version =  project.version
-    
 }
 
 publishing {
@@ -156,9 +153,9 @@ task integrationTest(type: Test) {
       destinationFile = file("$buildDir/jacoco/integrationTest.exec")
       classDumpDir = file("$buildDir/build/classes/integrationTest")
       includes = ["eu.*"]
-   }
+    }
 
-    testClassesDir = sourceSets.integrationTest.output.classesDir
+    testClassesDirs = sourceSets.integrationTest.output
     classpath = sourceSets.integrationTest.runtimeClasspath
     outputs.upToDateWhen { false }
 }
