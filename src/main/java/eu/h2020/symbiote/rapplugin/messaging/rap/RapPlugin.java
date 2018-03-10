@@ -127,8 +127,8 @@ public class RapPlugin implements SmartLifecycle {
                 if(internalIdTemp != null && !internalIdTemp.isEmpty())
                     internalId = internalIdTemp;
             }
-            List<Observation> observationList = doReadResource(internalId);
-            return new RapPluginOkResponse(observationList);
+            Observation observation = doReadResource(internalId);
+            return new RapPluginOkResponse(observation);
         } catch (RapPluginException e) {
             return e.getResponse();
         } catch (Exception e) {
@@ -371,9 +371,9 @@ public class RapPlugin implements SmartLifecycle {
      * Execute reading resource. 
      * 
      * @param resourceId internal resource id
-     * @return list of observation with one element
+     * @return observation
      */
-    public List<Observation> doReadResource(String resourceId) {
+    public Observation doReadResource(String resourceId) {
         if(readingResourceListener == null)
             throw new RuntimeException("ReadingResourceListener not registered in RapPlugin");
                     

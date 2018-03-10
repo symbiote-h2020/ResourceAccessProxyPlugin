@@ -13,14 +13,14 @@ import eu.h2020.symbiote.model.cim.Observation;
  */
 public interface ReadingResourceListener {
     /**  
-     * This method is called when DSI/RAP is asking for resource data.
+     * This method is called when RAP is asking for resource data.
      * In implementation you should put the query to the platform with 
      * internal resourceId to get data.
      * 
      * @param resourceId internal resource id
-     * @return list of observed values
+     * @return observed value
      */
-    List<Observation> readResource(String resourceId);
+    Observation readResource(String resourceId);
     
     /**
      * This method is called when DSI/RAP is asking for historical resource data.

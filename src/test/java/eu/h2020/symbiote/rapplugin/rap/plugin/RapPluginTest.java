@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import eu.h2020.symbiote.cloud.model.data.Result;
@@ -73,15 +74,15 @@ public class RapPluginTest {
     public void registeringAndCallingReadingResource_shouldCallListener() throws Exception {
         //given
         RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
-        LinkedList<Observation> expectedResult = new LinkedList<>();
-        when(readingListener.readResource("resourceId")).thenReturn(expectedResult);
+        Observation expectedObservation = Mockito.mock(Observation.class);
+        when(readingListener.readResource("resourceId")).thenReturn(expectedObservation);
         plugin.registerReadingResourceListener(readingListener);
         
         // when
-        List<Observation> result = plugin.doReadResource("resourceId");
+        Observation result = plugin.doReadResource("resourceId");
         
         //then
-        assertThat(result).isSameAs(expectedResult);
+        assertThat(result).isSameAs(expectedObservation);
     }
     
     @Test

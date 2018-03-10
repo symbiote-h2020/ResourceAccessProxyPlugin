@@ -203,12 +203,9 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         assertThat(receivedMessage).isNotNull();
 
         RapPluginOkResponse okResponse = new ObjectMapper().readValue(receivedMessage.getBody(), new TypeReference<RapPluginOkResponse>() { });
-        assertThat(okResponse.getBody()).isInstanceOf(List.class);
-        List<Observation> returnedObservations = (List<Observation>) okResponse.getBody();
-        assertThat(returnedObservations)
-            .hasSize(1)
-            .extracting(Observation::getResourceId)
-                .contains("platformResourceId");
+        assertThat(okResponse.getBody()).isInstanceOf(Observation.class);
+        Observation returnedObservation = (Observation) okResponse.getBody();
+        assertThat(returnedObservation.getResourceId()).isEqualTo("platformResourceId");
     }
 
     @Test @DirtiesContext
@@ -385,10 +382,8 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         return map;
     }
 
-    private List<Observation> getExpectedObservation() {
-        List<Observation> observations = new LinkedList<>();
-        observations.add(newObservation());
-        return observations;
+    private Observation getExpectedObservation() {
+        return newObservation();
     }
 
     private List<Observation> getExpectedObservations() {

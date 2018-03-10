@@ -34,7 +34,7 @@ following lines as well:
 
 ```
 repositories {
-	jcenter()
+	...
 	maven { url "https://jitpack.io" } // this is important to add
 }
 ```
@@ -75,10 +75,12 @@ on changed resource. Subscriptions are supported by registering `NotificationRes
 
 There are following RAP plugin consumers:
 - for reading resources there is `ReadingResourceListener`
-- for activating actuator and calling service there is `WritingToResourceListener`
+- for activating actuator there is `ActuatingoResourceListener`
+- for invoking service there is `InvokingServiceResourceListener`
 - for beginning and ending subscription there is `NotificationResourceListener`
 
-Registering and unregistering resources is done by calling `register...` or `unregister...` methods
+Registering and unregistering resources is done by calling `register...` 
+or `unregister...` methods
 in `RapPlugin` class. `RapPlugin` class can be injected like any other bean.
 
 ### 5. Reading resources
@@ -86,12 +88,14 @@ When resource needs to be read the RAP component will send message to RAP plugin
 that message will cause calling method in `ReadingResourceListener` class.
 It has following methods:
 
-- `List<Observation> readResource(String resourceId)` for reading one resource.
-The argument is internal resource ID. It returns list of observed values.
+- `Observation readResource(String resourceId)` for reading one resource.
+The argument is internal resource ID. It returns last observed value.
 - `List<Observation> readResourceHistory(String resourceId)` for reading
-historical observed values which are returned.
+historical observed values which are returned. Default value is to return last 
+100 readings.
 
-In the case that reading is not possible method should return `null`.
+In the case that reading is not possible method should return throw 
+`RapPluginException`.
 
 Here is example of registering and handling faked values for resource with internal id `iid1`:
 
@@ -100,65 +104,91 @@ rapPlugin.registerReadingResourceListener(new ReadingResourceListener() {
     
     @Override
     public List<Observation> readResourceHistory(String resourceId) {
-        if("iid1".equals(resourceId))
+        if("isen1".equals(resourceId))
+            // This is the place to put reading history data of sensor.
             return new ArrayList<>(Arrays.asList(createObservation(resourceId), createObservation(resourceId), createObservation(resourceId)));
-
-        return null;
+        else 
+            throw new RapPluginException(404, "Sensor not found.");
     }
     
     @Override
     public List<Observation> readResource(String resourceId) {
-        if("iid1".equals(resourceId)) {
+        if("isen1".equals(resourceId)) {
+            // This is place to put reading data from sensor 
             Observation o = createObservation(resourceId);
             return new ArrayList<>(Arrays.asList(o));
         }
             
-        return null;            
+        throw new RapPluginException(404, "Sensor not found.");
     }
 });
 ```
  
-### 6. Triggering actuator and/or calling service
-For both actions is used the same listener `WritingToResourceListener`. There 
+### 6. Triggering actuator
+For actuating resource there is `ActuatingResourceListener`. There 
 is only one method in this interface: 
-`Result<Object> writeResource(String resourceId, List<InputParameter> parameters)`.
-Arguments are: internal resource ID and service/actuation parameters.
-Parameters are implemented in `InputParameter` class. Return value is different
-for actuation and service call:
-- actuation - `null` is usual value, but it can be `Result` with message.
-- service call - must have return value that is put in `Result` object.
+`void actuateResource(String resourceId, Map<String,Capability> parameters);`.
 
-Here is example of both implementations of listener:
+Arguments are: internal resource ID and actuation parameters map.
+The key of map is capability name and capability is implemented in `Capability`
+class. `Capability` class has name parameters map. Parameters map has key which
+is parameter name and value is `Parameter` class. `Parameter` class has name and
+value. Parameter value can be any object.
+
+This method can throw `RapPluginException` when actuation can not be executed.
+
+Here is example implementation:
 ```java
-rapPlugin.registerWritingToResourceListener(new WritingToResourceListener() {
+rapPlugin.registerActuatingResourceListener(new ActuatingResourceListener() {
+    @Override
+    public void actuateResource(String resourceId, Map<String,Capability> parameters) {
+        System.out.println("Called actuation for resource " + resourceId);
+        for(Capability capability: parameters.values()) {
+            System.out.println("Capability: " + capability.getName());
+            for(Parameter parameter: capability.getParameters().values()) {
+                System.out.println(" " + parameter.getName() + " = " + parameter.getValue());
+            }
+        }
+        
+        if("iaid1".equals(resourceId)) {
+            // This is place to put actuation code for resource with id
+            System.out.println("iaid1 is actuated");
+            return;
+        } else {
+            throw new RapPluginException(404, "Actuating entity not found.");
+        }
+    }
+});
+```
+
+### 7. Invoking service
+For invoking service there is `InvokingServiceListener`. There 
+is only one method in this interface: 
+`Object invokeService(String resourceId, Map<String,Parameter> parameters);`.
+
+Arguments are: internal resource ID and actuation parameters map.
+Parameters map has key which
+is parameter name and value is `Parameter` class. `Parameter` class has name and
+value. Parameter value can be any object.
+
+This method can throw `RapPluginException` when invoking service can not be executed.
+
+Here is example implementation:
+```java
+rapPlugin.registerInvokingServiceListener(new InvokingServiceListener() {
     
     @Override
-    public Result<Object> writeResource(String resourceId, List<InputParameter> parameters) {
-        LOG.debug("writing to resource {} body:{}", resourceId, parameters);
-        if("2000".equals(resourceId)) { // actuation
-            Optional<InputParameter> lightParameter = parameters.stream().filter(p -> p.getName().equals("light")).findFirst();
-            if(lightParameter.isPresent()) {
-                String value = lightParameter.get().getValue();
-                if("on".equals(value)) {
-                    LOG.debug("Turning on light {}", resourceId);
-                    return new Result<>(false, null, "Turning on light " + resourceId);
-                } else if("off".equals(value)) {
-                    LOG.debug("Turning off light {}", resourceId);
-                    return new Result<>(false, null, "Turning off light " + resourceId);
-                }
-            }
-        } else if("3000".equals(resourceId)) { // service call
-            Optional<InputParameter> lightParameter = parameters.stream().filter(p -> p.getName().equals("trasholdTemperature")).findFirst();
-            if(lightParameter.isPresent()) {
-                String value = lightParameter.get().getValue();
-                LOG.debug("Setting trashold on resource {} to {}", resourceId, value);
-                return new Result<>(false, null, "Setting trashold on resource " + resourceId + " to " + value);
-                }
-            }
-            return null;
+    public Object invokeService(String resourceId, Map<String, Parameter> parameters) {
+        System.out.println("In invoking service of resource " + resourceId);
+        for(Parameter p: parameters.values())
+            System.out.println(" Parameter - name: " + p.getName() + " value: " + p.getValue());
+        if("isrid1".equals(resourceId)) {
+            return "ok";
+        } else {
+            throw new RapPluginException(404, "Service not found.");
         }
-    });
-}
+    }
+});
 ```
 
 ## Running
@@ -177,7 +207,7 @@ Note: In order to function correctly you need to start RabbitMQ and RAP componen
 ### createObservation method
 ```
 public Observation createObservation(String sensorId) {        
-    Location loc = new WGS84Location(15.9, 45.8, 145, "Spansko", Arrays.asList("City of Zagreb"));
+    Location loc = new WGS84Location(48.2088475, 16.3734492, 158, "Stephansdome", Arrays.asList("City of Wien"));
     
     TimeZone zoneUTC = TimeZone.getTimeZone("UTC");
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -192,8 +222,8 @@ public Observation createObservation(String sensorId) {
     ObservationValue obsval = 
             new ObservationValue(
                     "7", 
-                    new Property("Temperature", Arrays.asList("Air temperature")), 
-                    new UnitOfMeasurement("C", "degree Celsius", null));
+                    new Property("Temperature", "TempIRI", Arrays.asList("Air temperature")), 
+                    new UnitOfMeasurement("C", "degree Celsius", "C_IRI", null));
     ArrayList<ObservationValue> obsList = new ArrayList<>();
     obsList.add(obsval);
     
@@ -206,5 +236,5 @@ public Observation createObservation(String sensorId) {
     }
     
     return obs;
-}
+}    
 ```

@@ -10,13 +10,33 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Represents parameters of capability when actuating and parameters in invoking
+ * service.
+ * 
+ * @author Mario Kušek <mario.kusek@fer.hr>
+ *
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Parameter {
+    /**
+     * The name of parameter.
+     */
     private String name;
+    
+    /**
+     * The value of parameter.
+     */
     private Object value;
 
+    /**
+     * Checks if value can be serialized to JSON and back.
+     * 
+     * @param type of value
+     * @return typed value
+     */
     public <T> T getValueAsType(TypeReference<T> type) {
         ObjectMapper mapper = new ObjectMapper();
         
