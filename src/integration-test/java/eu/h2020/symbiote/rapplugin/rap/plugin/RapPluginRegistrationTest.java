@@ -40,8 +40,7 @@ import eu.h2020.symbiote.rapplugin.properties.RapProperties;
 import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
 
 @RunWith(SpringRunner.class)
-@Import({RabbitManager.class,
-    TestingRabbitConfig.class,
+@Import({TestingRabbitConfig.class,
     RapPluginProperties.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, RapProperties.class})
 @DirtiesContext
@@ -58,6 +57,11 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
         @Bean
         public RapPlugin rapPlugin(RabbitManager manager) {
             return new RapPlugin(manager, "platId", false, true);
+        }
+
+        @Bean
+        public RabbitManager rapRabbitManager(RabbitTemplate template) {
+        	return new RabbitManager(template);
         }
     }
     

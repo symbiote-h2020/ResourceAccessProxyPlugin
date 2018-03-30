@@ -7,6 +7,7 @@ buildscript {
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '2.3.1'
     }
 }
 
@@ -27,14 +28,14 @@ plugins {
     id "maven-publish"
 }
 
+apply plugin: 'com.cinnober.gradle.semver-git'
+
 group = 'eu.h2020.symbiote'
-version = '0.3.1'
 
 // this is needed for starter to not create fat jar
 bootRepackage.enabled = false
 
 jar {
-    baseName = 'rap-plugin'
     version =  project.version
 }
 
@@ -100,14 +101,13 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:Dalston.SR2"
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:Dalston.SR5"
     }
 }
 
 // creating source jar
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
-    baseName = 'rap-plugin'
     version =  project.version
 }
 

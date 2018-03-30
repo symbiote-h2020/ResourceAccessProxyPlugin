@@ -7,15 +7,18 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.rapplugin.properties.RapProperties;
 
@@ -27,6 +30,11 @@ import eu.h2020.symbiote.rapplugin.properties.RapProperties;
     RapProperties.class})
 public class RapPluginConfiguration implements ApplicationContextAware {
     private static final Logger LOG = LoggerFactory.getLogger(RapPluginConfiguration.class);
+    
+    @Bean
+    public RabbitManager rapRabbitManager(RabbitTemplate template) {
+    	return new RabbitManager(template);
+    }
     
     @Autowired
     private SimpleRabbitListenerContainerFactory simpleRabbitListenerContainerFactory;
