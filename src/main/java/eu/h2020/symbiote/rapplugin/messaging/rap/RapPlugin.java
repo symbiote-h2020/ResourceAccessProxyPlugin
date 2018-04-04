@@ -60,7 +60,6 @@ import lombok.Getter;
  * @author Mario Kušek <mario.kusek@fer.hr>
  * 
  */
-@Service
 public class RapPlugin implements SmartLifecycle {
     private static final Logger LOG = LoggerFactory.getLogger(RapPlugin.class);
 
