@@ -17,14 +17,16 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
+import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import eu.h2020.symbiote.rapplugin.properties.RabbitConnectionProperties;
+import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
 import eu.h2020.symbiote.rapplugin.properties.RapProperties;
 
 
 @Configuration
-@ComponentScan(basePackages = {"eu.h2020.symbiote.rapplugin"})
 @EnableConfigurationProperties({
     RabbitConnectionProperties.class, 
     RapProperties.class})
@@ -34,6 +36,16 @@ public class RapPluginConfiguration implements ApplicationContextAware {
     @Bean
     public RabbitManager rapRabbitManager(RabbitTemplate template) {
     	return new RabbitManager(template);
+    }
+    
+    @Bean
+    public RapPlugin rapPlugin(RabbitManager manager, RapPluginProperties props) {
+    	return new RapPlugin(manager, props);
+    }
+    
+    @Bean
+    public RapPluginProperties rapPluginProperties(RabbitConnectionProperties rabbitConnection, RapProperties pluginProperties) {
+    	return new RapPluginProperties(rabbitConnection, pluginProperties);
     }
     
     @Autowired

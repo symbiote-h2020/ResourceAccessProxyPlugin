@@ -12,7 +12,6 @@ import lombok.Getter;
  * @author Mario Kušek <mario.kusek@fer.hr>
  *
  */
-@Component("rapPluginProperties")
 public class RapPluginProperties {
     /**
      * The name of RAP plugin. 
