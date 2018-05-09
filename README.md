@@ -43,7 +43,7 @@ repositories {
 
 ### 3. Setting configuration
 
-Configuration needs to be put in `application.properties` or YMl file. An example is here:
+Configuration needs to be put in `application.properties` or YML file. An example is here:
 
 ```
 spring.application.name=RapPluginExample
