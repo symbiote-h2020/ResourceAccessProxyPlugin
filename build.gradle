@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '1.5.10.RELEASE'
+        springBootVersion = '1.5.12.RELEASE'
     }
     repositories {
         mavenCentral()
@@ -14,7 +14,7 @@ buildscript {
 plugins {
     id 'java'
     id 'io.franzbecker.gradle-lombok' version '1.8'
-    id 'org.springframework.boot' version '1.5.10.RELEASE'
+    id 'org.springframework.boot' version '1.5.12.RELEASE'
 
     // code quality
     id "jacoco"
@@ -88,7 +88,7 @@ dependencies {
     
 
     //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.+') { changing = true }
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.+') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.11.+') { changing = true }
     
     compileOnly('org.projectlombok:lombok')
 
