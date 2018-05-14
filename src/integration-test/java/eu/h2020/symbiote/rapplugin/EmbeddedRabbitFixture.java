@@ -17,7 +17,7 @@ public class EmbeddedRabbitFixture {
     private static final int RABBIT_STARTING_TIMEOUT = 20_000;
     
     // turn to false if you want to start RabbitMQ independently of tests.
-    private static final boolean RUN_EMBEDDED = true;
+    private static final boolean RUN_EMBEDDED = false;
 
     protected static EmbeddedRabbitMq rabbitMq;
 
