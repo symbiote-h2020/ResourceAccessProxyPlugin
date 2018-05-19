@@ -28,7 +28,7 @@ or add following for specific version:
 
 `compile('com.github.symbiote-h2020:ResourceAccessProxyPlugin:{version}')`
 
-Current version is `0.3.3`.
+Current version is `0.3.4`.
 
 This is dependency from jitpack repository. 
 In order to use jitpack you need to put in `build.gradle` 
