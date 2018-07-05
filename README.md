@@ -22,13 +22,13 @@ Create new SpringBoot project with no dependencies.
 
 Add following dependencies for cutting edge version:
 
-`compile('com.github.symbiote-h2020:ResourceAccessProxyPlugin:develop-SNAPSHOT') { changing = true }`
+`compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:develop-SNAPSHOT') { changing = true }`
 
 or add following for specific version:
 
-`compile('com.github.symbiote-h2020:ResourceAccessProxyPlugin:{version}')`
+`compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:{version}')`
 
-Current version is `0.3.5`.
+Current version is `0.3.6`.
 
 This is dependency from jitpack repository. 
 In order to use jitpack you need to put in `build.gradle` 
