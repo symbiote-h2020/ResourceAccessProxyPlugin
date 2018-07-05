@@ -1,6 +1,6 @@
-[![Build Status](https://api.travis-ci.org/symbiote-h2020/ResourceAccessProxyPlugin.svg?branch=develop)](https://api.travis-ci.org/symbiote-h2020/ResourceAccessProxyPlugin)
-[![codecov.io](https://codecov.io/github/symbiote-h2020/ResourceAccessProxyPlugin/branch/staging/graph/badge.svg)](https://codecov.io/github/symbiote-h2020/ResourceAccessProxyPlugin)
-[![](https://jitpack.io/v/symbiote-h2020/ResourceAccessProxyPlugin.svg)](https://jitpack.io/#symbiote-h2020/ResourceAccessProxyPlugin)
+[![Build Status](https://api.travis-ci.org/symbiote-h2020/ResourceAccessProxyPluginStarter.svg?branch=develop)](https://api.travis-ci.org/symbiote-h2020/ResourceAccessProxyPluginStarter)
+[![codecov.io](https://codecov.io/github/symbiote-h2020/ResourceAccessProxyPluginStarter/branch/staging/graph/badge.svg)](https://codecov.io/github/symbiote-h2020/ResourceAccessProxyPluginStarter)
+[![](https://jitpack.io/v/symbiote-h2020/ResourceAccessProxyPluginStarter.svg)](https://jitpack.io/#symbiote-h2020/ResourceAccessProxyPluginStarter)
 
 # Resource Access Proxy (RAP) Plugin
 
