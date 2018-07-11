@@ -19,8 +19,12 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Parameter {
+    
+    public Parameter(String name, Object value) {
+        this.name = name;
+        this.value = value;
+    }
     /**
      * The name of parameter.
      */
