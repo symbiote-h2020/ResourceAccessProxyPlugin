@@ -1,9 +1,10 @@
 package eu.h2020.symbiote.rapplugin.rap.plugin;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessGetMessage;
-import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessHistoryMessage;
+import com.github.paweladamski.httpclientmock.HttpClientMock;
+import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,14 +18,18 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
 import eu.h2020.symbiote.model.cim.Observation;
+import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import java.util.Arrays;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatorAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.SubscriptionListener;
+import eu.h2020.symbiote.rapplugin.value.PrimitiveValue;
+import eu.h2020.symbiote.rapplugin.value.Value;
 import java.util.HashMap;
 import java.util.Map;
+import static org.hamcrest.CoreMatchers.containsString;
 import org.junit.Before;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -35,6 +40,8 @@ import static org.mockito.Matchers.anyInt;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RapPluginTest {
+
+    private static final String RAP_PLUGIN_ID = "rap_plugin_test";
 
     @Mock
     private ResourceAccessListener readingListener;
@@ -55,8 +62,8 @@ public class RapPluginTest {
     private ResourceInfo resourceService;
     private Observation observation;
     private List<Observation> observations;
-    private Map<String, Object> serviceParameters;
-    private Map<String, Map<String, Object>> actuatorParameters;
+    private Map<String, Value> serviceParameters;
+    private Map<String, Map<String, Value>> actuatorParameters;
 
     @Before
     public void initializeData() {
@@ -68,10 +75,10 @@ public class RapPluginTest {
         resourceService.setType("Service");
         observation = new Observation(internalId, null, null, null, null);
         observations = Arrays.asList(observation, observation);
-        Map<String, Object> parameter1 = new HashMap<>();
-        parameter1.put("parameter_name_1", "parameter_value_1");
-        Map<String, Object> parameter2 = new HashMap<>();
-        parameter2.put("parameter_name_2", "parameter_value_2");
+        Map<String, Value> parameter1 = new HashMap<>();
+        parameter1.put("parameter_name_1", PrimitiveValue.create("parameter_value_1"));
+        Map<String, Value> parameter2 = new HashMap<>();
+        parameter1.put("parameter_name_2", PrimitiveValue.create("parameter_value_2"));
         serviceParameters = new HashMap<>();
         serviceParameters.putAll(parameter1);
         serviceParameters.putAll(parameter2);
@@ -80,9 +87,13 @@ public class RapPluginTest {
         actuatorParameters.put("capability_2", parameter2);
     }
 
+    private RapPlugin createRapPlugin() {
+        return new RapPlugin(null, RAP_PLUGIN_ID, false, false);
+    }
+
     @Test
     public void callingReadingResourceWhenNotRegisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
             plugin.doReadResource(Arrays.asList(resourceSensor));
         })
@@ -93,7 +104,7 @@ public class RapPluginTest {
 
     @Test
     public void callingReadingResourceWhenUnregisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         plugin.registerReadingResourceListener(readingListener);
         plugin.unregisterReadingResourceListener(readingListener);
         assertThatThrownBy(() -> {
@@ -106,8 +117,7 @@ public class RapPluginTest {
 
     @Test
     public void registeringAndCallingReadingResource_shouldCallListener() throws Exception {
-        //given
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         plugin.registerReadingResourceListener(readingListener);
         ObjectMapper mapper = new ObjectMapper();
         mapper.addMixInAnnotations(Observation.class, ObservationMixin.class);
@@ -120,7 +130,7 @@ public class RapPluginTest {
 
     @Test
     public void callingReadingResourceHistoryWhenNotRegisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
             plugin.doReadResourceHistory(Arrays.asList(resourceSensor), 1, null);
         })
@@ -131,7 +141,7 @@ public class RapPluginTest {
 
     @Test
     public void registeringAndCallingReadingResourceHistory_shouldCallListener() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         ObjectMapper mapper = new ObjectMapper();
         String expectedResult = mapper.writeValueAsString(observations);
         when(readingListener.getResourceHistory(
@@ -150,7 +160,7 @@ public class RapPluginTest {
 
     @Test
     public void callingWritingResourceWhenNotRegisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
             plugin.doActuateResource(internalId, actuatorParameters);
         })
@@ -161,7 +171,7 @@ public class RapPluginTest {
 
     @Test
     public void callingWritingResourceWhenUnregisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         plugin.registerActuatingResourceListener(actuatingListener);
         plugin.unregisterActuatingResourceListener(actuatingListener);
         assertThatThrownBy(() -> {
@@ -174,14 +184,14 @@ public class RapPluginTest {
 
     @Test
     public void registeringAndCallingActuatingResource_shouldCallListener() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         plugin.registerActuatingResourceListener(actuatingListener);
         plugin.doActuateResource("resourceId", null);
     }
 
     @Test
     public void callingInvokingServiceWhenNotRegisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
             plugin.doInvokeService(internalId, serviceParameters);
         })
@@ -192,7 +202,7 @@ public class RapPluginTest {
 
     @Test
     public void callingInvokingServiceWhenUnregisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         plugin.registerInvokingServiceListener(invokingServiceListener);
         plugin.unregisterInvokingServiceListener(invokingServiceListener);
         assertThatThrownBy(() -> {
@@ -205,7 +215,7 @@ public class RapPluginTest {
 
     @Test
     public void registeringAndCallingInvokingService_shouldCallListener() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         String expectedResultString = "{}";
         JsonNode expectedResultJson = new ObjectMapper().readTree(expectedResultString);
 
@@ -219,7 +229,7 @@ public class RapPluginTest {
 
     @Test
     public void callingSubcribeResourceWhenNotRegisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
             plugin.doSubscribeResource(internalId);
         })
@@ -230,7 +240,7 @@ public class RapPluginTest {
 
     @Test
     public void callingSubscribeResourceWhenUnregisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         plugin.registerNotificationResourceListener(notificationListener);
         plugin.unregisterNotificationResourceListener(notificationListener);
         assertThatThrownBy(() -> {
@@ -243,7 +253,7 @@ public class RapPluginTest {
 
     @Test
     public void registeringAndCallingSubscribeResource_shouldCallListener() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         plugin.registerNotificationResourceListener(notificationListener);
         plugin.doSubscribeResource(internalId);
         verify(notificationListener).subscribeResource(internalId);
@@ -251,7 +261,7 @@ public class RapPluginTest {
 
     @Test
     public void callingUnsubcribeResourceWhenNotRegisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
             plugin.doUnsubscribeResource(internalId);
         })
@@ -262,7 +272,7 @@ public class RapPluginTest {
 
     @Test
     public void registeringAndCallingUnsubscribeResource_shouldCallListener() throws Exception {
-        RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
+        RapPlugin plugin = createRapPlugin();
         plugin.registerNotificationResourceListener(notificationListener);
         plugin.doUnsubscribeResource(internalId);
         verify(notificationListener).unsubscribeResource(internalId);

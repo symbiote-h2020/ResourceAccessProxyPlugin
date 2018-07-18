@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.rapplugin.messaging.rap;
 
+import eu.h2020.symbiote.rapplugin.value.Value;
 import java.util.Map;
 
 /**
@@ -24,5 +25,5 @@ public interface ActuatorAccessListener {
      *
      * @throws RapPluginException when actuation can not be executed
      */
-    public void actuateResource(String internalId, Map<String, Map<String, Object>> capabilities);
+    public void actuateResource(String internalId, Map<String, Map<String, Value>> capabilities);
 }

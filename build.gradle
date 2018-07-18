@@ -66,7 +66,7 @@ configurations {
 
 allprojects {
     repositories {
-	    mavenLocal()
+        mavenLocal()
         jcenter()
         maven { url "https://jitpack.io" }
     }
@@ -85,6 +85,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter')
     compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.hibernate:hibernate-validator')
+    compile('com.github.symbiote-h2020:SymbIoTeSemantics:1.+') {changing = true}
     
 
     //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.+') { changing = true }
@@ -97,6 +98,7 @@ dependencies {
     testCompile('com.revinate:assertj-json:1.0.1')
     testCompile('io.arivera.oss:embedded-rabbitmq:1.1.2')
     testCompile('org.springframework.cloud:spring-cloud-contract-wiremock')
+    testCompile('com.github.paweladamski:HttpClientMock:1.0.4')
 }
 
 dependencyManagement {
@@ -148,9 +150,9 @@ check.dependsOn(jacocoTestReport)
 // integration tests
 task integrationTest(type: Test) {
     jacoco {
-      destinationFile = file("$buildDir/jacoco/integrationTest.exec")
-      classDumpDir = file("$buildDir/build/classes/integrationTest")
-      includes = ["eu.*"]
+        destinationFile = file("$buildDir/jacoco/integrationTest.exec")
+        classDumpDir = file("$buildDir/build/classes/integrationTest")
+        includes = ["eu.*"]
     }
 
     testClassesDirs = sourceSets.integrationTest.output

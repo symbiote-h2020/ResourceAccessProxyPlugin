@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.rapplugin.messaging.rap;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import eu.h2020.symbiote.rapplugin.value.Value;
 import java.util.Map;
 
 
@@ -28,5 +28,5 @@ public interface ServiceAccessListener {
      *
      * @throws RapPluginException when service can not be called
      */
-    String invokeService(String internalId, Map<String, Object> parameters);
+    String invokeService(String internalId, Map<String, Value> parameters);
 }

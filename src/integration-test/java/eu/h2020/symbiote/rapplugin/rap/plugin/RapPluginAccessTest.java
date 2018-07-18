@@ -25,7 +25,6 @@ import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -33,19 +32,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.github.paweladamski.httpclientmock.HttpClientMock;
 import com.rabbitmq.client.Channel;
+import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessGetMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessHistoryMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSetMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
+import eu.h2020.symbiote.model.cim.Actuator;
+import eu.h2020.symbiote.model.cim.Capability;
 import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
@@ -58,13 +60,22 @@ import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
 import eu.h2020.symbiote.rapplugin.properties.RapProperties;
 import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
 import eu.h2020.symbiote.model.cim.Observation;
+import eu.h2020.symbiote.model.cim.Parameter;
+import eu.h2020.symbiote.model.cim.PrimitiveDatatype;
+import eu.h2020.symbiote.model.cim.Service;
+import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatorAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
+import eu.h2020.symbiote.security.accesspolicies.common.AccessPolicyType;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
+import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @Import({RabbitManager.class,
@@ -79,9 +90,15 @@ import static org.mockito.Matchers.anyString;
 public class RapPluginAccessTest extends EmbeddedRabbitFixture {
 
     private static final Logger LOG = LoggerFactory.getLogger(RapPluginAccessTest.class);
+
+    private static final String RAP_PLUGIN_ID = "rap_plugin_test";
+    // RabbitMQ
+    private static final String RAP_QUEUE_NAME = RAP_PLUGIN_ID;
     private static final String PLUGIN_REGISTRATION_EXCHANGE = RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_OUT;
     private static final String PLUGIN_EXCHANGE = RapDefinitions.PLUGIN_EXCHANGE_IN;
-    private static final String RAP_QUEUE_NAME = "test_rap";
+    private static final String RABBIT_ROUTING_KEY_GET = RAP_PLUGIN_ID + ".get";
+    private static final String RABBIT_ROUTING_KEY_SET = RAP_PLUGIN_ID + ".set";
+    private static final String RABBIT_ROUTING_KEY_HISTORY = RAP_PLUGIN_ID + ".history";
 
     private static final int RECEIVE_TIMEOUT = 20_000;
 
@@ -90,7 +107,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
 
         @Bean
         public RapPlugin rapPlugin(RabbitManager manager) {
-            return new RapPlugin(manager, "enablerName", false, true);
+            return new RapPlugin(manager, RAP_PLUGIN_ID, false, true);
         }
     }
 
@@ -98,14 +115,11 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     private RapPlugin rapPlugin;
 
     @Autowired
-    private RabbitTemplate rabbitTemplate;
-
-    @Autowired
     private ConnectionFactory factory;
 
     private Connection connection;
     private Channel channel;
-    private ObjectMapper mapper;    
+    private ObjectMapper mapper;
 
     @Autowired
     private ApplicationContext ctx;
@@ -125,7 +139,9 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     private final String internalId = "internalId";
     private ResourceInfo resourceSensor;
     private ResourceInfo resourceActuator;
+    private CloudResource cloudResourceActuator;
     private ResourceInfo resourceService;
+    private CloudResource cloudResourceService;
     private Observation observation;
     private List<Observation> observations;
     private ResourceAccessGetMessage getMessage;
@@ -133,25 +149,75 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     private List<Map<String, Object>> serviceParameters;
     private Map<String, Map<String, Object>> actuatorParameters;
 
-    private void initializeData() {
-        resourceActuator = new ResourceInfo(symbioteId, internalId);
-        resourceActuator.setType("Sensor");
-        resourceActuator = new ResourceInfo(symbioteId, internalId);
-        resourceActuator.setType("Actuator");
-        resourceService = new ResourceInfo(symbioteId, internalId);
-        resourceService.setType("Service");
-        observation = new Observation(internalId, null, null, null, null);
-        observations = Arrays.asList(observation, observation);
-        getMessage = new ResourceAccessGetMessage(Arrays.asList(resourceSensor));
-        historyMessage = new ResourceAccessHistoryMessage(Arrays.asList(resourceSensor), observations.size(), null);
+    private CloudResource createServiceStub(String internalId, List<Parameter> parameters) throws InvalidArgumentsException {
+        CloudResource result = new CloudResource();
+
+        return result;
+    }
+
+    private void initializeData() throws InvalidArgumentsException {
+        // parameter 
         Map<String, Object> parameter1 = new HashMap<>();
         parameter1.put("parameter_name_1", "parameter_value_1");
         Map<String, Object> parameter2 = new HashMap<>();
         parameter2.put("parameter_name_2", "parameter_value_2");
-        serviceParameters = Arrays.asList(parameter1, parameter2);
+        PrimitiveDatatype xsdString = new PrimitiveDatatype();
+        xsdString.setBaseDatatype("xsd:string");
+        Parameter parameter1Definition = new Parameter();
+        parameter1Definition.setName("parameter_name_1");
+        parameter1Definition.setMandatory(true);
+        parameter1Definition.setDatatype(xsdString);
+        Parameter parameter2Definition = new Parameter();
+        parameter2Definition.setName("parameter_name_2");
+        parameter2Definition.setMandatory(false);
+        parameter2Definition.setDatatype(xsdString);
+        List<Parameter> parameterDefinitions = Arrays.asList(parameter1Definition, parameter2Definition);
+        // sensor
+        resourceSensor = new ResourceInfo(symbioteId, internalId);
+        resourceSensor.setType("Sensor");
+        // actuator
+        resourceActuator = new ResourceInfo(symbioteId, internalId);
+        resourceActuator.setType("Actuator");
         actuatorParameters = new HashMap<>();
         actuatorParameters.put("capability_1", parameter1);
         actuatorParameters.put("capability_2", parameter2);
+        cloudResourceActuator = new CloudResource();
+        cloudResourceActuator.setInternalId(internalId);
+        cloudResourceActuator.setPluginId(RAP_PLUGIN_ID);
+        cloudResourceActuator.setAccessPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+        cloudResourceActuator.setFilteringPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+        Actuator actuator = new Actuator();
+        actuator.setName("test service " + internalId);
+        actuator.setDescription(Arrays.asList("test service " + internalId));
+        actuator.setInterworkingServiceURL(rapPlugin.interworkingInterfaceUrl);
+        Capability capability1 = new Capability();
+        capability1.setName("capability_1");
+        capability1.setParameters(Arrays.asList(parameter1Definition));
+        Capability capability2 = new Capability();
+        capability2.setName("capability_2");
+        capability2.setParameters(Arrays.asList(parameter2Definition));
+        actuator.setCapabilities(Arrays.asList(capability1, capability2));
+        cloudResourceActuator.setResource(actuator);
+        // service
+        resourceService = new ResourceInfo(symbioteId, internalId);
+        resourceService.setType("Service");
+        serviceParameters = Arrays.asList(parameter1, parameter2);
+        cloudResourceService = new CloudResource();
+        cloudResourceService.setInternalId(internalId);
+        cloudResourceService.setPluginId(RAP_PLUGIN_ID);
+        cloudResourceService.setAccessPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+        cloudResourceService.setFilteringPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+        Service service = new Service();
+        service.setName("test service " + internalId);
+        service.setDescription(Arrays.asList("test service " + internalId));
+        service.setInterworkingServiceURL(rapPlugin.interworkingInterfaceUrl);
+        service.setParameters(parameterDefinitions);
+        cloudResourceService.setResource(service);
+//        cloudResourceService.s 
+        observation = new Observation(internalId, null, null, null, null);
+        observations = Arrays.asList(observation, observation);
+        getMessage = new ResourceAccessGetMessage(Arrays.asList(resourceSensor));
+        historyMessage = new ResourceAccessHistoryMessage(Arrays.asList(resourceSensor), observations.size(), null);
     }
 
     private void initializeJacksonMapper() {
@@ -192,8 +258,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         rapPlugin.registerReadingResourceListener(listener);
 
         String message = mapper.writeValueAsString(getMessage);
-        String routingKey = "enablerName.get";
-        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, message);
+        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_GET, message);
         assertNotNull(response);
         assertThat(response).isInstanceOf(RapPluginErrorResponse.class);
         RapPluginErrorResponse errorResponse = (RapPluginErrorResponse) response;
@@ -209,9 +274,8 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
                 .thenReturn(mapper.writeValueAsString(observation));
         rapPlugin.registerReadingResourceListener(listener);
         String message = mapper.writeValueAsString(getMessage);
-        String routingKey = "enablerName.get";
         Message request = rabbitTemplate.getMessageConverter().toMessage(message, new MessageProperties());
-        Message response = rabbitTemplate.sendAndReceive(PLUGIN_EXCHANGE, routingKey, request);
+        Message response = rabbitTemplate.sendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_GET, request);
         assertThat(response).isNotNull();
         RapPluginOkResponse okResponse = new ObjectMapper().readValue(response.getBody(), new TypeReference<RapPluginOkResponse>() {
         });
@@ -229,8 +293,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
                 .thenThrow(new RuntimeException("excaption message"));
         rapPlugin.registerReadingResourceListener(listener);
         String message = mapper.writeValueAsString(historyMessage);
-        String routingKey = "enablerName.history";
-        Object respsonse = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, message);
+        Object respsonse = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_HISTORY, message);
         assertNotNull(respsonse);
         assertThat(respsonse).isInstanceOf(RapPluginErrorResponse.class);
         RapPluginErrorResponse errResponse = (RapPluginErrorResponse) respsonse;
@@ -246,9 +309,8 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
                 .thenReturn(mapper.writeValueAsString(observations));
         rapPlugin.registerReadingResourceListener(listener);
         String message = mapper.writeValueAsString(historyMessage);
-        String routingKey = "enablerName.history";
         Message request = rabbitTemplate.getMessageConverter().toMessage(message, new MessageProperties());
-        Message response = rabbitTemplate.sendAndReceive(PLUGIN_EXCHANGE, routingKey, request);
+        Message response = rabbitTemplate.sendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_HISTORY, request);
         assertNotNull(response);
         RapPluginOkResponse okResponse = mapper.readValue(response.getBody(), RapPluginOkResponse.class);
         assertThat(okResponse.getBody()).isInstanceOf(String.class);
@@ -266,12 +328,18 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         ActuatorAccessListener listener = Mockito.mock(ActuatorAccessListener.class);
         doThrow(new RuntimeException("exception message"))
                 .when(listener).actuateResource(anyString(), anyMap());
+
+        HttpClientMock httpClientMock = new HttpClientMock();
+        httpClientMock
+                .onGet()
+                .withParameter("resourceInternalId", containsString(""))
+                .doReturnJSON(mapper.writeValueAsString(cloudResourceActuator));
+        ParameterDeserializer.setHttpClient(httpClientMock);
         rapPlugin.registerActuatingResourceListener(listener);
         String parameters = mapper.writeValueAsString(actuatorParameters);
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(Arrays.asList(resourceActuator), parameters);
         String message = mapper.writeValueAsString(msg);
-        String routingKey = "enablerName.set";
-        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, message);
+        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, message);
         assertThat(response).isInstanceOf(RapPluginErrorResponse.class);
         RapPluginErrorResponse errResponse = (RapPluginErrorResponse) response;
         assertThat(errResponse.getResponseCode()).isEqualTo(500);
@@ -286,11 +354,17 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
                 .thenThrow(new RapPluginException(500, "Some Internal Error"));
         rapPlugin.registerInvokingServiceListener(listener);
 
+        HttpClientMock httpClientMock = new HttpClientMock();
+        httpClientMock
+                .onGet()
+                .withParameter("resourceInternalId", containsString(""))
+                .doReturnJSON(mapper.writeValueAsString(cloudResourceService));
+        ParameterDeserializer.setHttpClient(httpClientMock);
+
         String parameters = mapper.writeValueAsString(serviceParameters);
         ResourceAccessSetMessage setMessage = new ResourceAccessSetMessage(Arrays.asList(resourceService), parameters);
         String message = mapper.writeValueAsString(setMessage);
-        String routingKey = "enablerName.set";
-        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, message);
+        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, message);
         assertThat(response).isInstanceOf(RapPluginErrorResponse.class);
         RapPluginErrorResponse errorResponse = (RapPluginErrorResponse) response;
         assertThat(errorResponse.getResponseCode()).isEqualTo(500);
@@ -307,12 +381,18 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
                 .thenReturn(expectedServiceResult);
         rapPlugin.registerInvokingServiceListener(listener);
 
+        HttpClientMock httpClientMock = new HttpClientMock();
+        httpClientMock
+                .onGet()
+                .withParameter("resourceInternalId", containsString(""))
+                .doReturnJSON(mapper.writeValueAsString(cloudResourceService));
+        ParameterDeserializer.setHttpClient(httpClientMock);
+
         String parameters = mapper.writeValueAsString(serviceParameters);
         ResourceAccessSetMessage setMessage = new ResourceAccessSetMessage(Arrays.asList(resourceService), parameters);
         String message = mapper.writeValueAsString(setMessage);
-        String routingKey = "enablerName.set";
         Message request = rabbitTemplate.getMessageConverter().toMessage(message, new MessageProperties());
-        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, request);
+        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, request);
         assertThat(response).isInstanceOf(RapPluginOkResponse.class);
         RapPluginOkResponse okResponse = (RapPluginOkResponse) response;
         assertThat(okResponse.getResponseCode()).isEqualTo(200);

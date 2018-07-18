@@ -13,7 +13,6 @@ import lombok.Getter;
 public class RapPluginException extends RuntimeException {
     private static final long serialVersionUID = 3072896250414289567L;
 
-    @Getter
     private RapPluginErrorResponse response;
 
     /**
@@ -25,5 +24,9 @@ public class RapPluginException extends RuntimeException {
     public RapPluginException(int responseCode, String message) {
         super(message);
         response = new RapPluginErrorResponse(responseCode, message);
+    }
+
+    public RapPluginErrorResponse getResponse() {
+        return response;
     }
 }

@@ -17,7 +17,6 @@ import org.springframework.messaging.Message;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -32,13 +31,16 @@ import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
 import eu.h2020.symbiote.enabler.messaging.model.rap.query.Query;
 import eu.h2020.symbiote.enabler.messaging.model.rap.registration.RegisterPluginMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.registration.UnregisterPluginMessage;
+import eu.h2020.symbiote.rapplugin.CapabilityDeserializer;
+import eu.h2020.symbiote.rapplugin.DeserializerRegistry;
+import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginResponse;
 import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
 import eu.h2020.symbiote.rapplugin.util.Utils;
-import java.util.stream.Collectors;
+import eu.h2020.symbiote.rapplugin.value.Value;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
@@ -79,6 +81,11 @@ public class RapPlugin implements SmartLifecycle {
 
     private ObjectMapper mapper;
 
+    private DeserializerRegistry deserializerRegistry;
+
+    // TODO get interworking interface URL from config
+    public String interworkingInterfaceUrl = "http://localhost";
+
     @Autowired
     public RapPlugin(RabbitManager rabbitManager, RapPluginProperties props) {
         this(rabbitManager,
@@ -94,7 +101,7 @@ public class RapPlugin implements SmartLifecycle {
         this.enablerName = enablerName;
         this.filtersSupported = filtersSupported;
         this.notificationsSupported = notificationsSupported;
-
+        this.deserializerRegistry = new DeserializerRegistry();
         mapper = new ObjectMapper();
     }
 
@@ -188,10 +195,18 @@ public class RapPlugin implements SmartLifecycle {
             ResourceInfo lastResourceInfo = Utils.getLastResourceInfo(resourceInfo);
             String internalId = lastResourceInfo.getInternalId();
             if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
-                doActuateResource(internalId, extractCapabilities(message));
+                doActuateResource(internalId,
+                        CapabilityDeserializer.deserialize(interworkingInterfaceUrl, 
+                                getDeserializerRegistry(),
+                                internalId,
+                                message.getBody()));
                 return new RapPluginOkResponse();
             } else if (TYPE_SERVICE.equalsIgnoreCase(lastResourceInfo.getType())) {
-                return new RapPluginOkResponse(doInvokeService(internalId, extractParameters(message)));
+                return new RapPluginOkResponse(doInvokeService(internalId,
+                        ParameterDeserializer.deserialize(interworkingInterfaceUrl, 
+                                getDeserializerRegistry(),
+                                internalId,
+                                message.getBody())));
             } else {
                 throw new RapPluginException(HttpStatus.BAD_REQUEST.value(), "SET not allowed on resource type '" + lastResourceInfo.getType() + "'");
             }
@@ -211,37 +226,16 @@ public class RapPlugin implements SmartLifecycle {
         }
     }
 
-    private Map<String, Object> extractParameters(ResourceAccessSetMessage message) throws IOException {
-        List<Map<String, Object>> fromJson = mapper.readValue(
-                message.getBody(),
-                new TypeReference<List<Map<String, Object>>>() {
-        });
-        return fromJson.stream()
-                .map(x -> x.entrySet())
-                .flatMap(x -> x.stream())
-                .collect(Collectors.toMap(
-                        y -> y.getKey(),
-                        y -> y.getValue()));
-
-    }
-
-    private Map<String, Map<String, Object>> extractCapabilities(ResourceAccessSetMessage message)
-            throws IOException, JsonParseException, JsonMappingException {
-        Map<String, List<Map<String, Object>>> fromJson = mapper.readValue(
-                message.getBody(),
-                new TypeReference<Map<String, List<Map<String, Object>>>>() {
-        });
-        return fromJson.entrySet().stream()
-                .collect(Collectors.toMap(
-                        x -> x.getKey(),
-                        x -> x.getValue().stream()
-                                .map(y -> y.entrySet())
-                                .flatMap(y -> y.stream())
-                                .collect(Collectors.toMap(
-                                        y -> y.getKey(),
-                                        y -> y.getValue()))));
-    }
-
+//    private Map<String, Value> extractParameters(ResourceAccessSetMessage message) throws IOException {
+//        return parameterDeserializer.deserialize(Utils.getInternalResourceId(message.getResourceInfo()), message.getBody());
+//    }
+//
+//    private Map<String, Map<String, Value>> extractCapabilities(ResourceAccessSetMessage message)
+//            throws IOException, JsonParseException, JsonMappingException {
+//        String jsonParameter = message.getBody();
+//        String internalId = Utils.getInternalResourceId(message.getResourceInfo());
+//
+//    }
     private <O> O deserializeRequest(Message<?> msg, Class<O> clazz)
             throws IOException, JsonParseException, JsonMappingException {
         String stringMsg;
@@ -393,7 +387,7 @@ public class RapPlugin implements SmartLifecycle {
      * @param capabilities map of capabilities. Key is capability name and value
      * is capability object with parameters.
      */
-    public void doActuateResource(String internalId, Map<String, Map<String, Object>> capabilities) {
+    public void doActuateResource(String internalId, Map<String, Map<String, Value>> capabilities) {
         if (actuatingResourceListener == null) {
             throw new RuntimeException("ActuatingResourceListener not registered in RapPlugin");
         }
@@ -427,7 +421,7 @@ public class RapPlugin implements SmartLifecycle {
      * parameter.
      * @return result of invoking service
      */
-    public String doInvokeService(String internalId, Map<String, Object> parameters) {
+    public String doInvokeService(String internalId, Map<String, Value> parameters) {
         if (invokingServiceListener == null) {
             throw new RuntimeException("InvokingServiceListener not registered in RapPlugin");
         }
@@ -510,5 +504,13 @@ public class RapPlugin implements SmartLifecycle {
     @Override
     public int getPhase() {
         return Integer.MAX_VALUE - 100;
+    }
+
+    public DeserializerRegistry getDeserializerRegistry() {
+        return deserializerRegistry;
+    }
+
+    public void setDeserializerRegistry(DeserializerRegistry deserializerRegistry) {
+        this.deserializerRegistry = deserializerRegistry;
     }
 }
