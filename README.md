@@ -30,6 +30,8 @@ or add following for specific version:
 
 Current version is `0.3.6`.
 
+**NOTE:** The previous versions (until 0.3.5) had different artifact name. Now the artifact name is ResourceAccessProxyPlugin**Starter**.
+
 This is dependency from jitpack repository. 
 In order to use jitpack you need to put in `build.gradle` 
 following lines as well:
