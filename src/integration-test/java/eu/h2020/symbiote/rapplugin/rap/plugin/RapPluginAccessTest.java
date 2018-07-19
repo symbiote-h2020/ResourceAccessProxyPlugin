@@ -42,10 +42,10 @@ import com.github.paweladamski.httpclientmock.HttpClientMock;
 import com.rabbitmq.client.Channel;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 
-import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessGetMessage;
-import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessHistoryMessage;
-import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSetMessage;
-import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
+import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessGetMessage;
+import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessHistoryMessage;
+import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessSetMessage;
+import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.model.cim.Actuator;
 import eu.h2020.symbiote.model.cim.Capability;
 import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;

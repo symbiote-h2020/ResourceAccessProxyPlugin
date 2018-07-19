@@ -1,7 +1,7 @@
 package eu.h2020.symbiote.rapplugin.messaging.rap;
 
-import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
-import eu.h2020.symbiote.enabler.messaging.model.rap.query.Query;
+import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
+import eu.h2020.symbiote.cloud.model.rap.query.Query;
 import java.util.List;
 
 /**

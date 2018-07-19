@@ -20,7 +20,7 @@ public interface ActuatorAccessListener {
      * internal resource id and parameters for setting the actuator value.
      *
      * @param internalId internal ID of the requested resource
-     * @param capabilities capabilities to trigger. Map of capabiliy name with
+     * @param capabilities capabilities to trigger. Map of capability name with
      * key-value pairs of parameter names and values
      *
      * @throws RapPluginException when actuation can not be executed

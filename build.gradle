@@ -87,9 +87,11 @@ dependencies {
     compile('org.hibernate:hibernate-validator')
     compile('com.github.symbiote-h2020:SymbIoTeSemantics:1.+') {changing = true}
     
-
-    //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.+') { changing = true }
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.11.+') { changing = true }
+	// mavenLocal  
+    //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.20.0-SNAPSHOT') { changing = true }
+    // jitpack
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:filter_support-SNAPSHOT') { }
+    //compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.20.+') { changing = true }
     
     compileOnly('org.projectlombok:lombok')
 

@@ -2,8 +2,8 @@ package eu.h2020.symbiote.rapplugin.messaging.rap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
-import eu.h2020.symbiote.enabler.messaging.model.rap.query.Query;
+import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
+import eu.h2020.symbiote.cloud.model.rap.query.Query;
 import eu.h2020.symbiote.rapplugin.util.Utils;
 import java.util.List;
 import org.slf4j.Logger;
