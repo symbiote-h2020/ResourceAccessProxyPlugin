@@ -28,7 +28,9 @@ or add following for specific version:
 
 `compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:{version}')`
 
-Current version is `0.3.6`.
+Current version is `0.3.7`.
+
+**NOTE:** The previous versions (until 0.3.5) had different artifact name. Now the artifact name is ResourceAccessProxyPlugin**Starter**.
 
 This is dependency from jitpack repository. 
 In order to use jitpack you need to put in `build.gradle` 
