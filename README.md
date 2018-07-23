@@ -59,6 +59,7 @@ rap-plugin.notificationsSupported=false
 ```
 
 The first line is defining the name of this specific RAP plugin.
+**NOTE:** When you register resource in the registration JSON there is `pluginId` which need to be this name. In this case it needs to be `RapPluginExample`.
 
 The second group of lines is configuration of RabbitMQ server. The RAP plugin communicates
 with RAP component by using RabbitMQ server. For connecting to RabbitMQ server RAP plugin
