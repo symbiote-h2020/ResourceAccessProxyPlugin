@@ -85,15 +85,19 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter')
     compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.hibernate:hibernate-validator')
-    compile('com.github.symbiote-h2020:SymbIoTeSemantics:1.+') {changing = true}
     
-	// mavenLocal  
+    
+    // mavenLocal  
     //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.20.0-SNAPSHOT') { changing = true }
     // jitpack
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:filter_support-SNAPSHOT') { }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:full_pim_support-SNAPSHOT') { }
+    compile('com.github.symbiote-h2020:SymbIoTeSemantics:develop-SNAPSHOT') {
+        
+    }
     //compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.20.+') { changing = true }
     
     compileOnly('org.projectlombok:lombok')
+    testCompileOnly('org.projectlombok:lombok')
 
     testCompile('org.springframework.boot:spring-boot-starter-test')
     testCompile('org.awaitility:awaitility:3.0.0')
@@ -225,7 +229,7 @@ tasks.withType(Test) {
 
 /*
 Run only unit tests
- > gradle clean test
+> gradle clean test
 
 Run only integration tests
 > gradle clean integrationTest
@@ -241,4 +245,4 @@ Run build and exclude integration tests
 
 publishing starter to mavenLocal
 > gradle clean build publishToMavenLocal
-*/
+ */

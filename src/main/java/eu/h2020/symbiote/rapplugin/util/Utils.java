@@ -149,16 +149,16 @@ public class Utils {
         return result;
     }
 
-    public static Resource getResourceDescription(String interworkingInterfaceUrl, String internalId) throws UnsupportedEncodingException, IOException {
-        return getResourceDescription(null, interworkingInterfaceUrl, internalId);
+    public static Resource getResourceDescription(String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
+        return getResourceDescription(null, registrationHandlerUrl, internalId);
     }
     
 
-    public static Resource getResourceDescription(HttpClient httpClient, String interworkingInterfaceUrl, String internalId) throws UnsupportedEncodingException, IOException {
+    public static Resource getResourceDescription(HttpClient httpClient, String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
         if (httpClient == null) {
             HttpClients.createDefault();
         }
-        String encodedUrl = interworkingInterfaceUrl + "/rh/resource?" + Utils.UrlEncode("resourceInternalId=" + internalId);
+        String encodedUrl = registrationHandlerUrl + "/resource?" + Utils.UrlEncode("resourceInternalId=" + internalId);
         HttpResponse response = httpClient.execute(new HttpGet(encodedUrl));
         if (response.getStatusLine().getStatusCode() != 200) {
             throw new RuntimeException(response.getStatusLine().toString());
@@ -167,12 +167,12 @@ public class Utils {
         return new ObjectMapper().readValue(json, CloudResource.class).getResource();
     }
 
-    public static List<Parameter> getServiceParameterDefinition(String interworkingInterfaceUrl, String internalId) throws UnsupportedEncodingException, IOException {
-        return getServiceParameterDefinition(null, interworkingInterfaceUrl, internalId);
+    public static List<Parameter> getServiceParameterDefinition(String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
+        return getServiceParameterDefinition(null, registrationHandlerUrl, internalId);
     }
 
-    public static List<Parameter> getServiceParameterDefinition(HttpClient httpClient, String interworkingInterfaceUrl, String internalId) throws UnsupportedEncodingException, IOException {
-        Resource resource = getResourceDescription(httpClient, interworkingInterfaceUrl, internalId);
+    public static List<Parameter> getServiceParameterDefinition(HttpClient httpClient, String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
+        Resource resource = getResourceDescription(httpClient, registrationHandlerUrl, internalId);
         if (!Service.class.isAssignableFrom(resource.getClass())) {
             // TODO make more generic to handle actuators as well
             throw new RuntimeException("resource is not a Service");
@@ -180,12 +180,12 @@ public class Utils {
         return ((Service) resource).getParameters();        
     }
 
-    public static List<Capability> getActuatorCapabilitiesParameterDefinition(String interworkingInterfaceUrl, String internalId) throws UnsupportedEncodingException, IOException {
-        return getActuatorCapabilitiesParameterDefinition(null, interworkingInterfaceUrl, internalId);
+    public static List<Capability> getActuatorCapabilitiesParameterDefinition(String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
+        return getActuatorCapabilitiesParameterDefinition(null, registrationHandlerUrl, internalId);
     }
     
-    public static List<Capability> getActuatorCapabilitiesParameterDefinition(HttpClient httpClient, String interworkingInterfaceUrl, String internalId) throws UnsupportedEncodingException, IOException {
-        Resource resource = getResourceDescription(httpClient, interworkingInterfaceUrl, internalId);
+    public static List<Capability> getActuatorCapabilitiesParameterDefinition(HttpClient httpClient, String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
+        Resource resource = getResourceDescription(httpClient, registrationHandlerUrl, internalId);
         if (!Actuator.class.isAssignableFrom(resource.getClass())) {
             throw new RuntimeException("resource is not a Service");
         }

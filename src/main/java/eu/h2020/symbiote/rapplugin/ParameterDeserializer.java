@@ -30,7 +30,7 @@ import org.apache.http.client.HttpClient;
 public class ParameterDeserializer {
 
     private final DeserializerRegistry deserializerRegistry;
-    private final String interworkingInterfaceUrl;
+    private final String registrationHandlerUrl;
     private final List<Parameter> parameterDefinition;
     private static HttpClient httpClient;
 
@@ -38,29 +38,29 @@ public class ParameterDeserializer {
         ParameterDeserializer.httpClient = httpClient;
     }
 
-    private ParameterDeserializer(String interworkingInterfaceUrl, DeserializerRegistry deserializerRegistry, List<Parameter> parameterDefinition) {
-        this.interworkingInterfaceUrl = interworkingInterfaceUrl;
+    private ParameterDeserializer(String registrationHandlerUrl, DeserializerRegistry deserializerRegistry, List<Parameter> parameterDefinition) {
+        this.registrationHandlerUrl = registrationHandlerUrl;
         this.deserializerRegistry = deserializerRegistry == null ? new DeserializerRegistry() : deserializerRegistry;
         this.parameterDefinition = parameterDefinition;
     }
 
-    public static Map<String, Value> deserialize(String interworkingInterfaceUrl, String internalId, String parametersJson) {
-        return new ParameterDeserializer(interworkingInterfaceUrl, null, null).deserializeInternal(internalId, parametersJson);
+    public static Map<String, Value> deserialize(String registrationHandlerUrl, String internalId, String parametersJson) {
+        return new ParameterDeserializer(registrationHandlerUrl, null, null).deserializeInternal(internalId, parametersJson);
     }
 
-    public static Map<String, Value> deserialize(String interworkingInterfaceUrl, DeserializerRegistry deserializerRegistry, String internalId, String parametersJson) {
-        return new ParameterDeserializer(interworkingInterfaceUrl, deserializerRegistry, null).deserializeInternal(internalId, parametersJson);
+    public static Map<String, Value> deserialize(String registrationHandlerUrl, DeserializerRegistry deserializerRegistry, String internalId, String parametersJson) {
+        return new ParameterDeserializer(registrationHandlerUrl, deserializerRegistry, null).deserializeInternal(internalId, parametersJson);
     }
 
-    public static Map<String, Value> deserialize(String interworkingInterfaceUrl, DeserializerRegistry deserializerRegistry, List<Parameter> parameterDefinition, String internalId, String parametersJson) {
-        return new ParameterDeserializer(interworkingInterfaceUrl, deserializerRegistry, parameterDefinition).deserializeInternal(internalId, parametersJson);
+    public static Map<String, Value> deserialize(String registrationHandlerUrl, DeserializerRegistry deserializerRegistry, List<Parameter> parameterDefinition, String internalId, String parametersJson) {
+        return new ParameterDeserializer(registrationHandlerUrl, deserializerRegistry, parameterDefinition).deserializeInternal(internalId, parametersJson);
     }
 
     private Map<String, Value> deserializeInternal(String internalId, String parametersJson) {
         Map<String, Value> result = new HashMap<>();
         try {
             List<Parameter> parametersDefined = parameterDefinition == null
-                    ? Utils.getServiceParameterDefinition(httpClient, interworkingInterfaceUrl, internalId)
+                    ? Utils.getServiceParameterDefinition(httpClient, registrationHandlerUrl, internalId)
                     : parameterDefinition;
             Map<String, String> parametersPresent = extractParameters(parametersJson);
             Optional<Parameter> mandatoryParameterNotPresent = parametersDefined.stream()
