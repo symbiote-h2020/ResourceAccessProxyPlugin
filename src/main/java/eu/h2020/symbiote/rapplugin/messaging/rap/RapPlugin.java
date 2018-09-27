@@ -124,18 +124,23 @@ public class RapPlugin implements SmartLifecycle {
             String result = doReadResource(message.getResourceInfo());
             return new RapPluginOkResponse(result);
         } catch (RapPluginException e) {
+            LOG.warn(generateErrorResponseMessage("There is error in plugin when reading resource. RabbitMQ message: ", msg), e);
             return e.getResponse();
         } catch (Exception e) {
-            if (msg.getPayload() instanceof byte[]) {
-                String responseMsg = "Can not read Observation for request: " + new String((byte[]) msg.getPayload(), StandardCharsets.UTF_8);
-                LOG.error(responseMsg, e);
-                return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
-            } else {
-                String responseMsg = "Can not read Observation for request: " + msg.getPayload();
-                LOG.error(responseMsg, e);
-                return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
-            }
+            String responseMsg = generateErrorResponseMessage("Can not read Observation for request: ", msg);
+            LOG.error(responseMsg, e);
+            return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
         }
+    }
+
+    private String generateErrorResponseMessage(String errorMsg, Message<?> msg) {
+        String responseMsg;
+        if (msg.getPayload() instanceof byte[]) {
+            responseMsg = errorMsg + new String((byte[]) msg.getPayload(), StandardCharsets.UTF_8);
+        } else {
+            responseMsg = errorMsg + msg.getPayload();
+        }
+        return responseMsg;
     }
 
     /**
@@ -157,17 +162,12 @@ public class RapPlugin implements SmartLifecycle {
             String result = doReadResourceHistory(msgHistory.getResourceInfo(), msgHistory.getTop(), msgHistory.getFilter());
             return new RapPluginOkResponse(result);
         } catch (RapPluginException e) {
+            LOG.warn(generateErrorResponseMessage("There is error in plugin when reading history of resource. RabbitMQ message: ", msg), e);
             return e.getResponse();
         } catch (Exception e) {
-            if (msg.getPayload() instanceof byte[]) {
-                String errorMsg = "Can not read history Observation for request: " + new String((byte[]) msg.getPayload(), StandardCharsets.UTF_8);
-                LOG.error(errorMsg, e);
-                return new RapPluginErrorResponse(500, errorMsg + "\n" + e.getMessage());
-            } else {
-                String errorMsg = "Can not read history Observation for request: " + msg.getPayload();
-                LOG.error(errorMsg, e);
-                return new RapPluginErrorResponse(500, errorMsg + "\n" + e.getMessage());
-            }
+            String errorMsg = generateErrorResponseMessage("Can not read history Observation for request: ", msg);
+            LOG.error(errorMsg, e);
+            return new RapPluginErrorResponse(500, errorMsg + "\n" + e.getMessage());
         }
     }
 
@@ -190,7 +190,7 @@ public class RapPlugin implements SmartLifecycle {
             ResourceAccessSetMessage message = deserializeRequest(msg, ResourceAccessSetMessage.class);
             List<ResourceInfo> resourceInfo = message.getResourceInfo();
             if (!Utils.isResourcePath(resourceInfo)) {
-                throw new RapPluginException(HttpStatus.NOT_IMPLEMENTED.value(), "actuation/service invokation only allowed on uniquely indentifiable resource");
+                throw new RapPluginException(HttpStatus.NOT_IMPLEMENTED.value(), "actuation/service invocation only allowed on uniquely indentifiable resource");
             }
             ResourceInfo lastResourceInfo = Utils.getLastResourceInfo(resourceInfo);
             String internalId = lastResourceInfo.getInternalId();
@@ -212,17 +212,12 @@ public class RapPlugin implements SmartLifecycle {
             }
 
         } catch (RapPluginException e) {
+            LOG.warn(generateErrorResponseMessage("There is error in plugin in actuation/service invocation. RabbitMQ message: ", msg), e);
             return e.getResponse();
         } catch (Exception e) {
-            if (msg.getPayload() instanceof byte[]) {
-                String responseMsg = "Can not set/call service for request: " + new String((byte[]) msg.getPayload(), StandardCharsets.UTF_8);
-                LOG.error(responseMsg, e);
-                return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
-            } else {
-                String responseMsg = "Can not set/call service for request: " + msg.getPayload();
-                LOG.error(responseMsg, e);
-                return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
-            }
+            String responseMsg = generateErrorResponseMessage("Can not set/call service for request: ", msg);
+            LOG.error(responseMsg, e);
+            return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
         }
     }
 
