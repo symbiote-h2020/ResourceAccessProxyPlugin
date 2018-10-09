@@ -17,7 +17,7 @@ import org.springframework.context.annotation.PropertySource;
 @NoArgsConstructor
 @Configuration
 @ConfigurationProperties(prefix = "rabbit", ignoreInvalidFields = true)
-@PropertySource({"classpath:bootstrap.properties", "bootstrap.properties"})
+@PropertySource({"classpath:bootstrap.properties", "./bootstrap.properties"})
 public class RabbitConnectionProperties {
     /**
      * Host of RabbitMQ server. 
