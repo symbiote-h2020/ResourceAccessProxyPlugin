@@ -4,6 +4,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
 /**
  * Properties for RabbitMQ connection.
@@ -13,7 +15,9 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
+@Configuration
 @ConfigurationProperties(prefix = "rabbit", ignoreInvalidFields = true)
+@PropertySource("classpath:bootstrap.properties")
 public class RabbitConnectionProperties {
     /**
      * Host of RabbitMQ server. 
