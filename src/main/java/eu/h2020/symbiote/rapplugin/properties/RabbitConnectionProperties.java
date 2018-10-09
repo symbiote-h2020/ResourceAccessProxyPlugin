@@ -20,7 +20,7 @@ public class RabbitConnectionProperties {
      * Property: <code>rabbit.host</code>. 
      * Default value is <code>localhost</code>.
      */
-    private String host = "localhost";
+    private String host = "jfkdjfdk";
 
     /**
      * Username for connecting to RabbitMQserver. 
