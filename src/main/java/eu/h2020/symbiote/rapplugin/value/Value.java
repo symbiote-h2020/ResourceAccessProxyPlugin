@@ -40,7 +40,7 @@ public interface Value<T> {
 
     public default ComplexValueArray asComplexArray() {
         if (ComplexValueArray.class.isAssignableFrom(this.getClass())) {
-            return (ComplexValueArray) this;
+            return (ComplexValueArray) this; 
         }
         throw new RuntimeException("Value cannot be cast to complex value");
     }
