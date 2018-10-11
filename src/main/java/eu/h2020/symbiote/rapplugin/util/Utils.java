@@ -156,7 +156,7 @@ public class Utils {
 
     public static Resource getResourceDescription(HttpClient httpClient, String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
         if (httpClient == null) {
-            HttpClients.createDefault();
+            httpClient = HttpClients.createDefault();
         }
         String encodedUrl = registrationHandlerUrl + "/resource?" + Utils.UrlEncode("resourceInternalId=" + internalId);
         HttpResponse response = httpClient.execute(new HttpGet(encodedUrl));

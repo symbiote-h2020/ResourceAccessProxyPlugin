@@ -81,15 +81,8 @@ public class ParameterDeserializer {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonParser jsonParser = mapper.getFactory().createParser(parameterPresent.getValue());
                 DeserializationContext deserializationContext = mapper.getDeserializationContext();
-                if (deserializerRegistry.hasDeserializer(parameterDefined.getDatatype())) {
-                    Object deserializedObject = deserializerRegistry.getDeserializer(parameterDefined.getDatatype())
-                            .deserialize(jsonParser, deserializationContext);
-                    if (!Value.class.isAssignableFrom(deserializedObject.getClass())) {
-                        deserializedValue = new CustomTypeValue(deserializedObject);
-                    }
-                } else {
-                    deserializedValue = new ValueDeserializer(parameterDefined.getDatatype()).deserialize(jsonParser, deserializationContext);
-                }
+                deserializedValue = new ValueDeserializer(parameterDefined.getDatatype(), deserializerRegistry)
+                        .deserialize(jsonParser, deserializationContext);
                 // check restrictions here?
                 if (!RestrictionChecker.checkRestrictions(deserializedValue, parameterDefined.getRestrictions())) {
                     throw new RuntimeException("restrictions violated for parameter '" + parameterPresent.getKey() + "'");

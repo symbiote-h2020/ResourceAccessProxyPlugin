@@ -7,16 +7,20 @@ package eu.h2020.symbiote.rapplugin.value;
 public interface Value<T> {
 
     public T get();
-    
+
     public default boolean isPrimitive() {
         return false;
     }
-    
+
     public default boolean isComplex() {
         return false;
     }
-    
+
     public default boolean isCustomType() {
+        return false;
+    }
+
+    public default boolean isComplexArray() {
         return false;
     }
 
@@ -33,8 +37,15 @@ public interface Value<T> {
         }
         throw new RuntimeException("Value cannot be cast to complex value");
     }
-    
-        public default CustomTypeValue<T> asCustomType() {
+
+    public default ComplexValueArray asComplexArray() {
+        if (ComplexValueArray.class.isAssignableFrom(this.getClass())) {
+            return (ComplexValueArray) this;
+        }
+        throw new RuntimeException("Value cannot be cast to complex value");
+    }
+
+    public default CustomTypeValue<T> asCustomType() {
         if (CustomTypeValue.class.isAssignableFrom(this.getClass())) {
             return (CustomTypeValue<T>) this;
         }
