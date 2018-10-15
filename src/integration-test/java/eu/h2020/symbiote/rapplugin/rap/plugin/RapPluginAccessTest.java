@@ -298,6 +298,35 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     }
 
     @Test @DirtiesContext
+    public void sendingResourceAccessActuation_whenTypeIsLight_shouldReturn204() throws Exception {
+        //given
+        ActuatingResourceListener writingListener = Mockito.mock(ActuatingResourceListener.class);
+        
+        Map<String, Capability> parameterList = createCapabilityMap(newCapability("capability1", "name1", "value1"),
+                newCapability("capability2", "name2", "value2"));
+        doNothing().when(writingListener).actuateResource(getInternalId(), parameterList);
+        rapPlugin.registerActuatingResourceListener(writingListener);
+        
+        ResourceInfo resourceInfo = new ResourceInfo(getSymbioteId(), getInternalId());
+        resourceInfo.setType("Light");
+        List<ResourceInfo> infoList = Arrays.asList(resourceInfo);
+        String body = createCapabilityRabbitMessage(parameterList);
+        ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
+        String json = mapper.writeValueAsString(msg);
+        
+        String routingKey =  "enablerName.set";
+    
+        // when
+        Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+    
+        //then
+        assertThat(returnedObject).isInstanceOf(RapPluginOkResponse.class);
+        RapPluginResponse response = (RapPluginOkResponse) returnedObject;
+        assertThat(response.getResponseCode()).isEqualTo(204);
+        verify(writingListener).actuateResource(getInternalId(), parameterList);
+    }
+
+    @Test @DirtiesContext
     public void sendingResourceAccessActuation_whenExceptionInPlugin_shouldReturnNull() throws Exception {
         //given
         ActuatingResourceListener writingListener = Mockito.mock(ActuatingResourceListener.class);

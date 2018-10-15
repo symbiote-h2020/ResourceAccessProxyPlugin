@@ -210,12 +210,13 @@ public class RapPlugin implements SmartLifecycle {
                 }
             }
             
-            if("Actuator".equals(type)) {
+            if(msgSet.getBody().trim().startsWith("{")) { 
+                // actuation
                 Map<String,Capability> parameters = extractCapabilities(msgSet);
                 doActuateResource(internalId, parameters);
                 return new RapPluginOkResponse();
             } else {
-                // service
+                // invoking service
                 ArrayList<HashMap<String, Object>> jsonObject = 
                         mapper.readValue(msgSet.getBody(), new TypeReference<ArrayList<HashMap<String, Object>>>() { });
                 Map<String, Parameter> parameters = new HashMap<>();
