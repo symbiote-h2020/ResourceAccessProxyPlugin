@@ -34,15 +34,15 @@ import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapDefinitions;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
-import eu.h2020.symbiote.rapplugin.properties.RabbitConnectionProperties;
+import eu.h2020.symbiote.rapplugin.properties.RabbitProperties;
+import eu.h2020.symbiote.rapplugin.properties.Properties;
 import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
-import eu.h2020.symbiote.rapplugin.properties.RapProperties;
 import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
 
 @RunWith(SpringRunner.class)
 @Import({TestingRabbitConfig.class,
     RapPluginProperties.class})
-@EnableConfigurationProperties({RabbitConnectionProperties.class, RapProperties.class})
+@EnableConfigurationProperties({RabbitProperties.class, RapPluginProperties.class})
 @DirtiesContext
 public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
     private static final String PLUGIN_REGISTRATION_EXCHANGE = RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_OUT;
@@ -56,7 +56,7 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
     public static class TestConfiguration {
         @Bean
         public RapPlugin rapPlugin(RabbitManager manager) {
-            return new RapPlugin(manager, "platId", false, true);
+            return new RapPlugin(manager, "platId", false, true, "");
         }
 
         @Bean

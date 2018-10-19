@@ -10,11 +10,11 @@ import org.springframework.amqp.core.MessagePropertiesBuilder;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.springframework.stereotype.Component;
 
 /**
  * Bean used to manage internal communication using RabbitMQ. It is responsible
@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  *
  * @author mateuszl, Petar Krivic, Mario Kusek
  */
+@Component
 public class RabbitManager {
     private static final Logger LOG = LoggerFactory.getLogger(RabbitManager.class);
     private static final int REPLY_TIMEOUT = 20_000;

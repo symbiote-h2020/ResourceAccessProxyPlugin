@@ -88,7 +88,7 @@ public class RapPluginTest {
     }
 
     private RapPlugin createRapPlugin() {
-        return new RapPlugin(null, RAP_PLUGIN_ID, false, false);
+        return new RapPlugin(null, RAP_PLUGIN_ID, false, false, "");
     }
 
     @Test

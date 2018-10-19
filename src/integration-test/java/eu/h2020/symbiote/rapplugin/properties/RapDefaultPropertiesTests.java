@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.rapplugin.messaging.properties;
+package eu.h2020.symbiote.rapplugin.properties;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -9,19 +9,18 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import eu.h2020.symbiote.rapplugin.properties.RabbitConnectionProperties;
+import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
 
 @RunWith(SpringRunner.class)
-@EnableConfigurationProperties(RabbitConnectionProperties.class)
+@EnableConfigurationProperties(RapPluginProperties.class)
 @TestPropertySource(locations = "classpath:empty.properties")
-public class RabbitConnectionDefaultPropertiesTests {
+public class RapDefaultPropertiesTests {
     @Autowired
-    private RabbitConnectionProperties props;
+    private RapPluginProperties props;
 
     @Test
     public void shouldLoadFirstLevelProperties() {
-        assertThat(props.getHost()).isEqualTo("localhost");
-        assertThat(props.getUsername()).isEqualTo("guest");
-        assertThat(props.getPassword()).isEqualTo("guest");
+        assertThat(props.isFiltersSupported()).isFalse();
+        assertThat(props.isNotificationsSupported()).isFalse();
     }
 }

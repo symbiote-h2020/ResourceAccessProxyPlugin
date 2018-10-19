@@ -38,11 +38,12 @@ import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginResponse;
-import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
+import eu.h2020.symbiote.rapplugin.properties.Properties;
 import eu.h2020.symbiote.rapplugin.util.Utils;
 import eu.h2020.symbiote.rapplugin.value.Value;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 /**
  * This is Spring component that handles requests from RAP. You can register
@@ -53,6 +54,7 @@ import org.springframework.http.HttpStatus;
  * @author Mario Kušek <mario.kusek@fer.hr>
  *
  */
+@Component
 public class RapPlugin implements SmartLifecycle {
 
     public static final String TYPE_ACTUATOR = "Actuator";
@@ -83,25 +85,30 @@ public class RapPlugin implements SmartLifecycle {
 
     private DeserializerRegistry deserializerRegistry;
 
-    // TODO get interworking interface URL from config
-    public String interworkingInterfaceUrl = "http://localhost";
+    private final String registrationHandlerUrl;
 
     @Autowired
-    public RapPlugin(RabbitManager rabbitManager, RapPluginProperties props) {
+    public RapPlugin(RabbitManager rabbitManager, Properties props) {
         this(rabbitManager,
                 props.getPluginName(),
                 props.getPlugin().isFiltersSupported(),
-                props.getPlugin().isNotificationsSupported()
+                props.getPlugin().isNotificationsSupported(),
+                props.getPlugin().getRegistrationHandlerUrl()
         );
     }
 
-    public RapPlugin(RabbitManager rabbitManager, String enablerName, boolean filtersSupported,
-            boolean notificationsSupported) {
+    public RapPlugin(
+            RabbitManager rabbitManager, 
+            String enablerName, 
+            boolean filtersSupported,
+            boolean notificationsSupported,
+            String registrationHandlerUrl) {
         this.rabbitManager = rabbitManager;
         this.enablerName = enablerName;
         this.filtersSupported = filtersSupported;
         this.notificationsSupported = notificationsSupported;
         this.deserializerRegistry = new DeserializerRegistry();
+        this.registrationHandlerUrl = registrationHandlerUrl;
         mapper = new ObjectMapper();
     }
 
@@ -196,14 +203,14 @@ public class RapPlugin implements SmartLifecycle {
             String internalId = lastResourceInfo.getInternalId();
             if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
                 doActuateResource(internalId,
-                        CapabilityDeserializer.deserialize(interworkingInterfaceUrl, 
+                        CapabilityDeserializer.deserialize(registrationHandlerUrl, 
                                 getDeserializerRegistry(),
                                 internalId,
                                 message.getBody()));
                 return new RapPluginOkResponse();
             } else if (TYPE_SERVICE.equalsIgnoreCase(lastResourceInfo.getType())) {
                 return new RapPluginOkResponse(doInvokeService(internalId,
-                        ParameterDeserializer.deserialize(interworkingInterfaceUrl, 
+                        ParameterDeserializer.deserialize(registrationHandlerUrl, 
                                 getDeserializerRegistry(),
                                 internalId,
                                 message.getBody())));

@@ -1,56 +1,44 @@
 package eu.h2020.symbiote.rapplugin.properties;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import lombok.Getter;
-
 /**
- * Properties for RapPlugin.
+ * RapProperties
  * 
  * @author Mario Kušek <mario.kusek@fer.hr>
  *
  */
+@Data
+@Component
+@NoArgsConstructor
+@ConfigurationProperties(prefix = "rap-plugin")
 public class RapPluginProperties {
     /**
-     * The name of RAP plugin. 
-     * It reads 'spring.application.name' from properties.
-     * It defaults to "DefaultRapPluginName".
+     * Defines if RAP plugin is able do handle OData filters.
      * 
+     * Property: <code>rap-plugin.filtersSupported</code>. 
+     * Default value is <code>false</code>.
      */
-    @Getter
-    @Value("${spring.application.name:DefaultRapPluginName}")
-    private String pluginName = "";
-
-    /**
-     * RabbitMQ properties from <code>RabbitConnectionProperties</code> class
-     * 
-     * @see eu.h2020.symbiote.rapplugin.properties.RabbitConnectionProperties
-     */
-    @Getter
-    private RabbitConnectionProperties rabbitConnection;
+    private boolean filtersSupported = false;
     
-    private RapProperties pluginProperties;
-
-    public RapPluginProperties() {
-        rabbitConnection = new RabbitConnectionProperties();
-        pluginProperties = new RapProperties();
-    }
-
-    @Autowired
-    public RapPluginProperties(RabbitConnectionProperties rabbitConnection, RapProperties pluginProperties) {
-        this.rabbitConnection = rabbitConnection;
-        this.pluginProperties = pluginProperties;
-    }
-
+    
     /**
-     * Getter for RapProperties.
-     * @return RapProperties
+     * Defines if RAP plugin is able do handle notification subscriptions.
      * 
-     * @see eu.h2020.symbiote.rapplugin.properties.RapProperties
+     * Property: <code>rap-plugin.notificationsSupported</code>. 
+     * Default value is <code>false</code>.
      */
-    public RapProperties getPlugin() {
-        return pluginProperties;
-    }
+    private boolean notificationsSupported = false;
+    
+    /**
+     * URL of registration handler.
+     * 
+     * Property: <code>rap-plugin.registrationHandlerUrl</code>. 
+     * Default value is <code>http://localhost/rh</code>.
+     */
+    private String registrationHandlerUrl = "http://localhost/rh";
 }

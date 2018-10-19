@@ -55,14 +55,15 @@ import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapDefinitions;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPluginException;
-import eu.h2020.symbiote.rapplugin.properties.RabbitConnectionProperties;
+import eu.h2020.symbiote.rapplugin.properties.RabbitProperties;
+import eu.h2020.symbiote.rapplugin.properties.Properties;
 import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
-import eu.h2020.symbiote.rapplugin.properties.RapProperties;
 import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
 import eu.h2020.symbiote.model.cim.Observation;
 import eu.h2020.symbiote.model.cim.Parameter;
 import eu.h2020.symbiote.model.cim.PrimitiveDatatype;
 import eu.h2020.symbiote.model.cim.Service;
+import eu.h2020.symbiote.rapplugin.CapabilityDeserializer;
 import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatorAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
@@ -70,6 +71,9 @@ import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
 import eu.h2020.symbiote.security.accesspolicies.common.AccessPolicyType;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.util.EntityUtils;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -81,7 +85,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @Import({RabbitManager.class,
     TestingRabbitConfig.class,
     RapPluginProperties.class})
-@EnableConfigurationProperties({RabbitConnectionProperties.class, RapProperties.class})
+@EnableConfigurationProperties({RabbitProperties.class, RapPluginProperties.class})
 @DirtiesContext
 /**
  * @author Mario Kušek <mario.kusek@fer.hr>
@@ -107,7 +111,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
 
         @Bean
         public RapPlugin rapPlugin(RabbitManager manager) {
-            return new RapPlugin(manager, RAP_PLUGIN_ID, false, true);
+            return new RapPlugin(manager, RAP_PLUGIN_ID, false, true, "http://localhost/rh");
         }
     }
 
@@ -186,10 +190,11 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         cloudResourceActuator.setPluginId(RAP_PLUGIN_ID);
         cloudResourceActuator.setAccessPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
         cloudResourceActuator.setFilteringPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+        String interworkingInterfaceUrl = "foo";
         Actuator actuator = new Actuator();
         actuator.setName("test service " + internalId);
         actuator.setDescription(Arrays.asList("test service " + internalId));
-        actuator.setInterworkingServiceURL(rapPlugin.interworkingInterfaceUrl);
+        actuator.setInterworkingServiceURL(interworkingInterfaceUrl);
         Capability capability1 = new Capability();
         capability1.setName("capability_1");
         capability1.setParameters(Arrays.asList(parameter1Definition));
@@ -210,7 +215,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         Service service = new Service();
         service.setName("test service " + internalId);
         service.setDescription(Arrays.asList("test service " + internalId));
-        service.setInterworkingServiceURL(rapPlugin.interworkingInterfaceUrl);
+        service.setInterworkingServiceURL(interworkingInterfaceUrl);
         service.setParameters(parameterDefinitions);
         cloudResourceService.setResource(service);
 //        cloudResourceService.s 
@@ -290,7 +295,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     public void sendingResourceAccessHistoryMessage_whenExceptionInPlugin_shouldReturnHistoryOfResourceReading() throws Exception {
         ResourceAccessListener listener = Mockito.mock(ResourceAccessListener.class);
         when(listener.getResourceHistory(any(), anyInt(), any()))
-                .thenThrow(new RuntimeException("excaption message"));
+                .thenThrow(new RuntimeException("exception message"));
         rapPlugin.registerReadingResourceListener(listener);
         String message = mapper.writeValueAsString(historyMessage);
         Object respsonse = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_HISTORY, message);
@@ -334,7 +339,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
                 .onGet()
                 .withParameter("resourceInternalId", containsString(""))
                 .doReturnJSON(mapper.writeValueAsString(cloudResourceActuator));
-        ParameterDeserializer.setHttpClient(httpClientMock);
+        CapabilityDeserializer.setHttpClient(httpClientMock);
         rapPlugin.registerActuatingResourceListener(listener);
         String parameters = mapper.writeValueAsString(actuatorParameters);
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(Arrays.asList(resourceActuator), parameters);

@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.rapplugin.messaging.properties;
+package eu.h2020.symbiote.rapplugin.properties;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -10,14 +10,14 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import eu.h2020.symbiote.rapplugin.properties.RabbitConnectionProperties;
+import eu.h2020.symbiote.rapplugin.properties.RabbitProperties;
 
 @RunWith(SpringRunner.class)
-@EnableConfigurationProperties(RabbitConnectionProperties.class)
+@EnableConfigurationProperties(RabbitProperties.class)
 @TestPropertySource(locations = "classpath:custom.properties")
 public class RabbitConnectionPropertiesTests {
     @Autowired
-    private RabbitConnectionProperties props;
+    private RabbitProperties props;
 
     @Value("${rabbit.host}")
     private String host;
