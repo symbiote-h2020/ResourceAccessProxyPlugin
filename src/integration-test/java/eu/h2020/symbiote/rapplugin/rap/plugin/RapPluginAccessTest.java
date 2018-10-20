@@ -2,14 +2,25 @@ package eu.h2020.symbiote.rapplugin.rap.plugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.doesNotHave;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.After;
 import org.junit.Before;
@@ -34,6 +45,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -52,6 +64,7 @@ import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
+import eu.h2020.symbiote.rapplugin.messaging.RapPluginResponse;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapDefinitions;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPluginException;
@@ -65,6 +78,7 @@ import eu.h2020.symbiote.model.cim.PrimitiveDatatype;
 import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.rapplugin.CapabilityDeserializer;
 import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
+import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatingResourceListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatorAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
@@ -242,7 +256,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         rabbitAdmin.declareExchange(ExchangeBuilder.topicExchange(PLUGIN_REGISTRATION_EXCHANGE).build());
         rabbitAdmin.declareExchange(ExchangeBuilder.topicExchange(PLUGIN_EXCHANGE).build());
         rabbitAdmin.declareQueue(QueueBuilder.durable(RAP_QUEUE_NAME).build());
-        rabbitAdmin.purgeQueue(RAP_QUEUE_NAME, true);
+        rabbitAdmin.purgeQueue(RAP_QUEUE_NAME, false);
     }
 
     @After
@@ -332,23 +346,131 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     public void sendingResourceAccessSetMessageForActuation_whenExceptionInPlugin_shouldReturnNull() throws Exception {
         ActuatorAccessListener listener = Mockito.mock(ActuatorAccessListener.class);
         doThrow(new RuntimeException("exception message"))
-                .when(listener).actuateResource(anyString(), anyMap());
+            .when(listener).actuateResource(anyString(), anyMap());
 
-        HttpClientMock httpClientMock = new HttpClientMock();
-        httpClientMock
-                .onGet()
-                .withParameter("resourceInternalId", containsString(""))
-                .doReturnJSON(mapper.writeValueAsString(cloudResourceActuator));
-        CapabilityDeserializer.setHttpClient(httpClientMock);
-        rapPlugin.registerActuatingResourceListener(listener);
-        String parameters = mapper.writeValueAsString(actuatorParameters);
-        ResourceAccessSetMessage msg = new ResourceAccessSetMessage(Arrays.asList(resourceActuator), parameters);
-        String message = mapper.writeValueAsString(msg);
-        Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, message);
-        assertThat(response).isInstanceOf(RapPluginErrorResponse.class);
-        RapPluginErrorResponse errResponse = (RapPluginErrorResponse) response;
-        assertThat(errResponse.getResponseCode()).isEqualTo(500);
+            HttpClientMock httpClientMock = new HttpClientMock();
+            httpClientMock
+                    .onGet()
+                    .withParameter("resourceInternalId", containsString(""))
+                    .doReturnJSON(mapper.writeValueAsString(cloudResourceActuator));
+            CapabilityDeserializer.setHttpClient(httpClientMock);
+            rapPlugin.registerActuatingResourceListener(listener);
+            String parameters = mapper.writeValueAsString(actuatorParameters);
+            ResourceAccessSetMessage msg = new ResourceAccessSetMessage(Arrays.asList(resourceActuator), parameters);
+            String message = mapper.writeValueAsString(msg);
+            Object response = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, message);
+            assertThat(response).isInstanceOf(RapPluginErrorResponse.class);
+            RapPluginErrorResponse errResponse = (RapPluginErrorResponse) response;
+            assertThat(errResponse.getResponseCode()).isEqualTo(500);
     }
+
+    // TODO uncomment test
+//    @Test @DirtiesContext
+//    public void sendingResourceAccessActuation_shouldReturn204() throws Exception {
+//        //given
+//        ActuatingResourceListener writingListener = Mockito.mock(ActuatingResourceListener.class);
+//        
+////        Map<String, Capability> parameterList = createCapabilityMap(newCapability("capability1", "name1", "value1"),
+////                newCapability("capability2", "name2", "value2"));
+//        doNothing().when(writingListener).actuateResource(internalId, actuatorParameters);
+//        rapPlugin.registerActuatingResourceListener(writingListener);
+//        
+//        ResourceInfo resourceInfo = new ResourceInfo(getSymbioteId(), getInternalId());
+//        resourceInfo.setType("Actuator");
+//        List<ResourceInfo> infoList = Arrays.asList(resourceInfo);
+//        String body = createCapabilityRabbitMessage(parameterList);
+//        ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
+//        String json = mapper.writeValueAsString(msg);
+//        
+//        String routingKey =  "enablerName.set";
+//    
+//        // when
+//        Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+//    
+//        //then
+//        assertThat(returnedObject).isInstanceOf(RapPluginOkResponse.class);
+//        RapPluginResponse response = (RapPluginOkResponse) returnedObject;
+//        assertThat(response.getResponseCode()).isEqualTo(204);
+//        verify(writingListener).actuateResource(getInternalId(), parameterList);
+//    }
+
+    // TODO uncomment test
+//    @Test @DirtiesContext
+//    public void sendingResourceAccessActuation_whenTypeIsLight_shouldReturn204() throws Exception {
+//        //given
+//        ActuatingResourceListener writingListener = Mockito.mock(ActuatingResourceListener.class);
+//        
+//        Map<String, Capability> parameterList = createCapabilityMap(newCapability("capability1", "name1", "value1"),
+//                newCapability("capability2", "name2", "value2"));
+//        doNothing().when(writingListener).actuateResource(getInternalId(), parameterList);
+//        rapPlugin.registerActuatingResourceListener(writingListener);
+//        
+//        ResourceInfo resourceInfo = new ResourceInfo(getSymbioteId(), getInternalId());
+//        resourceInfo.setType("Light");
+//        List<ResourceInfo> infoList = Arrays.asList(resourceInfo);
+//        String body = createCapabilityRabbitMessage(parameterList);
+//        ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
+//        String json = mapper.writeValueAsString(msg);
+//        
+//        String routingKey =  "enablerName.set";
+//    
+//        // when
+//        Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+//    
+//        //then
+//        assertThat(returnedObject).isInstanceOf(RapPluginOkResponse.class);
+//        RapPluginResponse response = (RapPluginOkResponse) returnedObject;
+//        assertThat(response.getResponseCode()).isEqualTo(204);
+//        verify(writingListener).actuateResource(getInternalId(), parameterList);
+//    }
+
+    // TODO uncomment test    
+//    @Test @DirtiesContext
+//    public void sendingResourceAccessActuation_whenExceptionInPlugin_shouldReturnNull() throws Exception {
+//        //given
+//        ActuatingResourceListener writingListener = Mockito.mock(ActuatingResourceListener.class);
+//        
+//        Map<String, Capability> parameterList = createCapabilityMap(newCapability("capability1", "name1", "value1"),
+//                newCapability("capability2", "name2", "value2"));
+//        doThrow(new RuntimeException("exception message")).when(writingListener).actuateResource(getInternalId(), parameterList);
+//        rapPlugin.registerActuatingResourceListener(writingListener);
+//        
+//        List<ResourceInfo> infoList = Arrays.asList(new ResourceInfo(getSymbioteId(), getInternalId()));
+//        String body = createCapabilityRabbitMessage(parameterList);
+//        ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
+//        String json = mapper.writeValueAsString(msg);
+//        
+//        String routingKey =  "enablerName.set";
+//    
+//        // when
+//        Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+//    
+//        //then
+//        assertThat(returnedObject).isInstanceOf(RapPluginErrorResponse.class);
+//        RapPluginResponse response = (RapPluginErrorResponse) returnedObject;
+//        assertThat(response.getResponseCode()).isEqualTo(500);
+//    }
+    
+    private String createCapabilityRabbitMessage(Map<String, Capability> capabilities) throws JsonProcessingException {
+        Map<String, List<?>> capabilitiesMap = new HashMap<>();
+        for(Capability c: capabilities.values()) {
+            capabilitiesMap.put(c.getName(), createListOfParameters(c));
+        }
+        return mapper.writeValueAsString(capabilitiesMap);
+    }
+
+    private List<?> createListOfParameters(Capability c) {
+        List<Map<String, Object>> list = new LinkedList<>();
+        
+        for(Parameter param: c.getParameters()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put(param.getName(), param);
+            list.add(map);
+        }
+        
+        return list;
+    }
+
 
     @Test
     @DirtiesContext

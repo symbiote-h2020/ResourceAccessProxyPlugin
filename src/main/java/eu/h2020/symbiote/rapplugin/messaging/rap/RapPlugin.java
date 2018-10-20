@@ -201,14 +201,17 @@ public class RapPlugin implements SmartLifecycle {
             }
             ResourceInfo lastResourceInfo = Utils.getLastResourceInfo(resourceInfo);
             String internalId = lastResourceInfo.getInternalId();
-            if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
+            if(message.getBody().trim().startsWith("{")) { 
+            //if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
+                // actuation
                 doActuateResource(internalId,
                         CapabilityDeserializer.deserialize(registrationHandlerUrl, 
                                 getDeserializerRegistry(),
                                 internalId,
                                 message.getBody()));
                 return new RapPluginOkResponse();
-            } else if (TYPE_SERVICE.equalsIgnoreCase(lastResourceInfo.getType())) {
+            } else if (message.getBody().trim().startsWith("[")) {
+            //} else if (TYPE_SERVICE.equalsIgnoreCase(lastResourceInfo.getType())) {
                 return new RapPluginOkResponse(doInvokeService(internalId,
                         ParameterDeserializer.deserialize(registrationHandlerUrl, 
                                 getDeserializerRegistry(),
