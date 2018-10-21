@@ -17,7 +17,6 @@ public class ActuatorAccessListenerAdapter implements ActuatorAccessListener {
 
     public ActuatorAccessListenerAdapter(@SuppressWarnings("deprecation") ActuatingResourceListener listener) {
         this.delegate = listener;
-        // TODO Auto-generated constructor stub
     }
 
     @SuppressWarnings("deprecation")
@@ -26,7 +25,6 @@ public class ActuatorAccessListenerAdapter implements ActuatorAccessListener {
         delegate.actuateResource(internalId, convertCapabilities(capabilities));
     }
     
-    // TODO test this
     private Map<String,Capability> convertCapabilities(Map<String, Map<String, Value>> valueCapabilities) {
         Map<String, Capability> capabilities = new HashMap<>();
         for(Entry<String, Map<String, Value>> entry: valueCapabilities.entrySet()) {
@@ -38,6 +36,7 @@ public class ActuatorAccessListenerAdapter implements ActuatorAccessListener {
                 Parameter parameter = new Parameter();
                 parameter.setName(parameterEntry.getKey());
                 parameter.setValue(parameterEntry.getValue().get());
+                parameters.put(parameterEntry.getKey(), parameter);
             }
             capability.setParameters(parameters);
             capabilities.put(entry.getKey(), capability);

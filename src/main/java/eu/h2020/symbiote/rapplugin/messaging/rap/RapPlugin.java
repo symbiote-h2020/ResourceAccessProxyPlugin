@@ -128,7 +128,7 @@ public class RapPlugin implements SmartLifecycle {
             String result = doReadResource(message.getResourceInfo());
             return new RapPluginOkResponse(result);
         } catch (RapPluginException e) {
-            LOG.warn(generateErrorResponseMessage("There is error in plugin when reading resource. RabbitMQ message: ", msg), e);
+            LOG.error(generateErrorResponseMessage("There is error in plugin when reading resource. RabbitMQ message: ", msg), e);
             return e.getResponse();
         } catch (Exception e) {
             String responseMsg = generateErrorResponseMessage("Can not read Observation for request: ", msg);
@@ -166,7 +166,7 @@ public class RapPlugin implements SmartLifecycle {
             String result = doReadResourceHistory(msgHistory.getResourceInfo(), msgHistory.getTop(), msgHistory.getFilter());
             return new RapPluginOkResponse(result);
         } catch (RapPluginException e) {
-            LOG.warn(generateErrorResponseMessage("There is error in plugin when reading history of resource. RabbitMQ message: ", msg), e);
+            LOG.error(generateErrorResponseMessage("There is error in plugin when reading history of resource. RabbitMQ message: ", msg), e);
             return e.getResponse();
         } catch (Exception e) {
             String errorMsg = generateErrorResponseMessage("Can not read history Observation for request: ", msg);
@@ -218,7 +218,6 @@ public class RapPlugin implements SmartLifecycle {
                 throw new RapPluginException(HttpStatus.BAD_REQUEST.value(), "SET not allowed on resource type '" + lastResourceInfo.getType() + "'");
             }
 
-            // TODO find all occurrences and check that all are logging error 
         } catch (RapPluginException e) {
             LOG.error(generateErrorResponseMessage("There is error in plugin in actuation/service invocation. RabbitMQ message: ", msg), e);
             return e.getResponse();

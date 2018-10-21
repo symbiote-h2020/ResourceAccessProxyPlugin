@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.springframework.http.HttpStatus;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -29,12 +31,12 @@ public class ServiceAccessListenerAdapter implements ServiceAccessListener {
             return mapper.writeValueAsString(
                     invokeServiceResult);
         } catch (JsonProcessingException e) {
-            throw new RapPluginException(500, "Can not convert message from InvokingServiceListener.invokeService of type " + 
+            throw new RapPluginException(HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                    "Can not convert message from InvokingServiceListener.invokeService of type " + 
                     invokeServiceResult.getClass().getCanonicalName() + " to JSON.", e);
         }
     }
 
-    // TODO test this
     private Map<String, Parameter> convertParameters(Map<String, Value> parameters) {
         Map<String, Parameter> map = new HashMap<>();
         for(Entry<String, Value> entry: parameters.entrySet()) {

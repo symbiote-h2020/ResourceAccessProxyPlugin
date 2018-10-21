@@ -4,6 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.http.HttpStatus;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,7 +91,9 @@ public class RapPluginOkResponse extends RapPluginResponse {
         try {
             return mapper.writeValueAsString(body);
         } catch (JsonProcessingException e) {
-            throw new RapPluginException(500, "Content of body can not be serialized to JSON in RAP plugin. Body is of type " + body.getClass().getName());
+            throw new RapPluginException(HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                    "Content of body can not be serialized to JSON in RAP plugin. Body is of type " + 
+                    body.getClass().getName(), e);
         }
     }
 }

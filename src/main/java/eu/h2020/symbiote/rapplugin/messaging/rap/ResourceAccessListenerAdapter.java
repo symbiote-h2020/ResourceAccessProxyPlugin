@@ -38,9 +38,9 @@ public class ResourceAccessListenerAdapter implements ResourceAccessListener {
             try {
                 return new ObjectMapper().writeValueAsString(readResourceResult);
             } catch (JsonProcessingException ex) {
-                String message = "Could not serialize resource returned from ReadingResourceListener.readResource of type " + readResourceResult.getClass().getCanonicalName() + " to JSON";
-                LOG.error(message, ex);
-                throw new RapPluginException(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
+                String message = "Could not serialize resource returned from ReadingResourceListener.readResource of type " + 
+                        readResourceResult.getClass().getCanonicalName() + " to JSON";
+                throw new RapPluginException(HttpStatus.INTERNAL_SERVER_ERROR.value(), message, ex);
             }
         } else {
             throw new RapPluginException(HttpStatus.NOT_IMPLEMENTED.value(), "only access on resource level supported");
@@ -58,9 +58,9 @@ public class ResourceAccessListenerAdapter implements ResourceAccessListener {
             List<Observation> readResourceHistoryResult = delegate.readResourceHistory(lastInternalId);
             try {
                 return new ObjectMapper().writeValueAsString(readResourceHistoryResult);
-                // TODO find catching JsonProcessingException and throwing RapPluginException to include original exception.
             } catch (JsonProcessingException ex) {
-                String message = "Could not serialize resource returned from ReadingResourceListener.readResourceHistory of type " + readResourceHistoryResult.getClass().getCanonicalName() + " to JSON";
+                String message = "Could not serialize resource returned from ReadingResourceListener.readResourceHistory of type " + 
+                        readResourceHistoryResult.getClass().getCanonicalName() + " to JSON";
                 throw new RapPluginException(HttpStatus.INTERNAL_SERVER_ERROR.value(), message, ex);
             }
         } else {
