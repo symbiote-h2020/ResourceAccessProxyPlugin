@@ -1,10 +1,7 @@
 package eu.h2020.symbiote.rapplugin.rap.plugin;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.paweladamski.httpclientmock.HttpClientMock;
-import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,7 +15,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.model.cim.Observation;
-import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import java.util.Arrays;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
@@ -29,7 +25,6 @@ import eu.h2020.symbiote.rapplugin.value.PrimitiveValue;
 import eu.h2020.symbiote.rapplugin.value.Value;
 import java.util.HashMap;
 import java.util.Map;
-import static org.hamcrest.CoreMatchers.containsString;
 import org.junit.Before;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
