@@ -57,9 +57,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class RapPlugin implements SmartLifecycle {
 
-    public static final String TYPE_ACTUATOR = "Actuator";
-    public static final String TYPE_SERVICE = "Service";
-
     private static final Logger LOG = LoggerFactory.getLogger(RapPlugin.class);
 
     private RabbitManager rabbitManager;
@@ -202,7 +199,7 @@ public class RapPlugin implements SmartLifecycle {
             ResourceInfo lastResourceInfo = Utils.getLastResourceInfo(resourceInfo);
             String internalId = lastResourceInfo.getInternalId();
             if(message.getBody().trim().startsWith("{")) { 
-            //if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
+            // TODO if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
                 // actuation
                 doActuateResource(internalId,
                         CapabilityDeserializer.deserialize(registrationHandlerUrl, 
@@ -211,7 +208,7 @@ public class RapPlugin implements SmartLifecycle {
                                 message.getBody()));
                 return new RapPluginOkResponse();
             } else if (message.getBody().trim().startsWith("[")) {
-            //} else if (TYPE_SERVICE.equalsIgnoreCase(lastResourceInfo.getType())) {
+            // TODO } else if (TYPE_SERVICE.equalsIgnoreCase(lastResourceInfo.getType())) {
                 return new RapPluginOkResponse(doInvokeService(internalId,
                         ParameterDeserializer.deserialize(registrationHandlerUrl, 
                                 getDeserializerRegistry(),
