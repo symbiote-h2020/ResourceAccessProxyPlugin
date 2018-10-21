@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.cloud.model.rap.query.Query;
+import eu.h2020.symbiote.model.cim.Observation;
 import eu.h2020.symbiote.rapplugin.util.Utils;
 import java.util.List;
 import org.slf4j.Logger;
@@ -33,10 +34,11 @@ public class ResourceAccessListenerAdapter implements ResourceAccessListener {
     public String getResource(List<ResourceInfo> resourceInfo) {
         if (Utils.isResourcePath(resourceInfo)) {
             String lastInternalId = Utils.getInternalResourceId(resourceInfo);
+            Observation readResourceResult = delegate.readResource(lastInternalId);
             try {
-                return new ObjectMapper().writeValueAsString(delegate.readResource(lastInternalId));
+                return new ObjectMapper().writeValueAsString(readResourceResult);
             } catch (JsonProcessingException ex) {
-                String message = "could not serialize resource to JSON";
+                String message = "Could not serialize resource returned from ReadingResourceListener.readResource of type " + readResourceResult.getClass().getCanonicalName() + " to JSON";
                 LOG.error(message, ex);
                 throw new RapPluginException(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
             }
@@ -53,12 +55,13 @@ public class ResourceAccessListenerAdapter implements ResourceAccessListener {
                 throw new RapPluginException(HttpStatus.NOT_IMPLEMENTED.value(), "filter operator not supported");
             }
             String lastInternalId = Utils.getInternalResourceId(resourceInfo);
+            List<Observation> readResourceHistoryResult = delegate.readResourceHistory(lastInternalId);
             try {
-                return new ObjectMapper().writeValueAsString(delegate.readResourceHistory(lastInternalId));
+                return new ObjectMapper().writeValueAsString(readResourceHistoryResult);
+                // TODO find catching JsonProcessingException and throwing RapPluginException to include original exception.
             } catch (JsonProcessingException ex) {
-                String message = "could not serialize resource to JSON";
-                LOG.error(message, ex);
-                throw new RapPluginException(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
+                String message = "Could not serialize resource returned from ReadingResourceListener.readResourceHistory of type " + readResourceHistoryResult.getClass().getCanonicalName() + " to JSON";
+                throw new RapPluginException(HttpStatus.INTERNAL_SERVER_ERROR.value(), message, ex);
             }
         } else {
             throw new RapPluginException(HttpStatus.NOT_IMPLEMENTED.value(), "only access on resource level supported");

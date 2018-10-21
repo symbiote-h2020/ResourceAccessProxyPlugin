@@ -26,6 +26,18 @@ public class RapPluginException extends RuntimeException {
         response = new RapPluginErrorResponse(responseCode, message);
     }
 
+    /**
+     * Creates exception with message and response code.
+     * 
+     * @param responseCode will be returned to client
+     * @param message message returned to client
+     * @param t throwable that caused this exception
+     */
+    public RapPluginException(int responseCode, String message, Throwable t) {
+        super(message, t);
+        response = new RapPluginErrorResponse(responseCode, message);
+    }
+
     public RapPluginErrorResponse getResponse() {
         return response;
     }

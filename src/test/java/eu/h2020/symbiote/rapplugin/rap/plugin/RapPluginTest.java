@@ -277,18 +277,18 @@ public class RapPluginTest {
     }
     
     @Test
-    public void callingInvokingServiceWhenNotRegisteredListener_shouldThrowException() throws Exception {
+    public void callingInvokeServiceWhenNotRegisteredListener_shouldThrowException() throws Exception {
         RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
             plugin.doInvokeService(internalId, serviceParameters);
         })
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("InvokingServiceListener not registered in RapPlugin")
+                .hasMessage("ServiceAccessListener not registered in RapPlugin")
                 .hasNoCause();
     }
 
     @Test
-    public void callingInvokingServiceWhenUnregisteredListener_shouldThrowException() throws Exception {
+    public void callingInvokeServiceWhenUnregisteredServiceAccessListener_shouldThrowException() throws Exception {
         RapPlugin plugin = createRapPlugin();
         plugin.registerInvokingServiceListener(serviceAccessListener);
         plugin.unregisterInvokingServiceListener(serviceAccessListener);
@@ -296,12 +296,26 @@ public class RapPluginTest {
             plugin.doInvokeService(internalId, serviceParameters);
         })
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("InvokingServiceListener not registered in RapPlugin")
+                .hasMessage("ServiceAccessListener not registered in RapPlugin")
+                .hasNoCause();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void callingInvokeServiceWhenUnregisteredInvokingServiceListener_shouldThrowException() throws Exception {
+        RapPlugin plugin = createRapPlugin();
+        plugin.registerInvokingServiceListener(invokingServiceListener);
+        plugin.unregisterInvokingServiceListener(invokingServiceListener);
+        assertThatThrownBy(() -> {
+            plugin.doInvokeService(internalId, serviceParameters);
+        })
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("ServiceAccessListener not registered in RapPlugin")
                 .hasNoCause();
     }
 
     @Test
-    public void registeringAndCallingInvokingService_shouldCallListener() throws Exception {
+    public void registeringServiceAccessLisntenerAndCallingInvokingService_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
         String expectedResultString = "{}";
         JsonNode expectedResultJson = new ObjectMapper().readTree(expectedResultString);
@@ -312,6 +326,20 @@ public class RapPluginTest {
         String result = plugin.doInvokeService(internalId, serviceParameters);
         JsonNode resultJson = new ObjectMapper().readTree(result);
         assertThat(resultJson).isEqualTo(expectedResultJson);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void registeringInvokingServiceLisntenerAndCallingInvokingService_shouldCallListener() throws Exception {
+        RapPlugin plugin = createRapPlugin();
+        String expectedResult = "OK";
+        plugin.registerInvokingServiceListener(invokingServiceListener);
+        when(invokingServiceListener.invokeService(any(), any()))
+                .thenReturn(expectedResult);
+        
+        String result = plugin.doInvokeService(internalId, serviceParameters);
+        
+        assertThat(result).isEqualTo(new ObjectMapper().writeValueAsString(expectedResult));
     }
 
     @Test

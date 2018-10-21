@@ -218,8 +218,9 @@ public class RapPlugin implements SmartLifecycle {
                 throw new RapPluginException(HttpStatus.BAD_REQUEST.value(), "SET not allowed on resource type '" + lastResourceInfo.getType() + "'");
             }
 
+            // TODO find all occurrences and check that all are logging error 
         } catch (RapPluginException e) {
-            LOG.warn(generateErrorResponseMessage("There is error in plugin in actuation/service invocation. RabbitMQ message: ", msg), e);
+            LOG.error(generateErrorResponseMessage("There is error in plugin in actuation/service invocation. RabbitMQ message: ", msg), e);
             return e.getResponse();
         } catch (Exception e) {
             String responseMsg = generateErrorResponseMessage("Can not set/call service for request: ", msg);
@@ -446,7 +447,7 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     /**
-     * Registers listener for invonking service.
+     * Registers listener for invoking service.
      *
      * @param invokingServiceListener
      */
@@ -455,11 +456,35 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     /**
+     * Registers listener for invoking service.
+     *
+     * @param invokingServiceListener
+     * 
+     * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener} 
+     */
+    @Deprecated
+    public void registerInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
+        this.invokingServiceListener = new ServiceAccessListenerAdapter(invokingServiceListener);
+    }
+
+    /**
      * Unregisters listener for invoking service.
      *
      * @param invokingServiceListener
      */
     public void unregisterInvokingServiceListener(ServiceAccessListener invokingServiceListener) {
+        this.invokingServiceListener = null;
+    }
+
+    /**
+     * Unregisters listener for invoking service.
+     *
+     * @param invokingServiceListener
+     * 
+     * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener}
+     */
+    @Deprecated
+    public void unregisterInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
         this.invokingServiceListener = null;
     }
 
@@ -473,7 +498,7 @@ public class RapPlugin implements SmartLifecycle {
      */
     public String doInvokeService(String internalId, Map<String, Value> parameters) {
         if (invokingServiceListener == null) {
-            throw new RuntimeException("InvokingServiceListener not registered in RapPlugin");
+            throw new RuntimeException("ServiceAccessListener not registered in RapPlugin");
         }
 
         return invokingServiceListener.invokeService(internalId, parameters);
