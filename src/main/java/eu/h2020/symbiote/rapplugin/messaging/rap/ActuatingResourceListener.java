@@ -2,7 +2,7 @@ package eu.h2020.symbiote.rapplugin.messaging.rap;
 
 import java.util.Map;
 
-import eu.h2020.symbiote.model.cim.Capability;
+import eu.h2020.symbiote.rapplugin.domain.Capability;
 
 /**
  * This listener is called when RAP sends request over RabbitMQ to execute

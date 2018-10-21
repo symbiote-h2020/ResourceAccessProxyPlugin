@@ -3,6 +3,7 @@ package eu.h2020.symbiote.rapplugin.rap.plugin;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -199,7 +200,6 @@ public class RapPluginTest {
         assertThat(resultObservation).isEqualTo(observations);
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void registeringReadingResourceListenerAndCallingReadingResourceHistory_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
@@ -224,12 +224,12 @@ public class RapPluginTest {
             plugin.doActuateResource(internalId, actuatorParameters);
         })
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("ActuatingResourceListener not registered in RapPlugin")
+                .hasMessage("ActuatorAccessListener not registered in RapPlugin")
                 .hasNoCause();
     }
 
     @Test
-    public void callingWritingResourceWhenUnregisteredListener_shouldThrowException() throws Exception {
+    public void callingWritingResourceWhenUnregisteredActuatorAccessListener_shouldThrowException() throws Exception {
         RapPlugin plugin = createRapPlugin();
         plugin.registerActuatingResourceListener(actuatorAccessListener);
         plugin.unregisterActuatingResourceListener(actuatorAccessListener);
@@ -237,17 +237,45 @@ public class RapPluginTest {
             plugin.doActuateResource(internalId, actuatorParameters);
         })
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("ActuatingResourceListener not registered in RapPlugin")
+                .hasMessage("ActuatorAccessListener not registered in RapPlugin")
+                .hasNoCause();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void callingWritingResourceWhenUnregisteredListener_shouldThrowException() throws Exception {
+        RapPlugin plugin = createRapPlugin();
+        plugin.registerActuatingResourceListener(actuatingResourceListener);
+        plugin.unregisterActuatingResourceListener(actuatingResourceListener);
+        assertThatThrownBy(() -> {
+            plugin.doActuateResource(internalId, actuatorParameters);
+        })
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("ActuatorAccessListener not registered in RapPlugin")
                 .hasNoCause();
     }
 
     @Test
-    public void registeringAndCallingActuatingResource_shouldCallListener() throws Exception {
+    public void registeringActuatorAccessListenerAndCallingActuateResource_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
         plugin.registerActuatingResourceListener(actuatorAccessListener);
+        
         plugin.doActuateResource("resourceId", null);
+        
+        verify(actuatorAccessListener).actuateResource(any(), any());        
     }
 
+    @SuppressWarnings("deprecation")
+    @Test
+    public void registeringActuatingResourceListenerAndCallingActuateResource_shouldCallListener() throws Exception {
+        RapPlugin plugin = createRapPlugin();
+        plugin.registerActuatingResourceListener(actuatingResourceListener);
+        
+        plugin.doActuateResource("resourceId", actuatorParameters);
+        
+        verify(actuatingResourceListener).actuateResource(any(), any());
+    }
+    
     @Test
     public void callingInvokingServiceWhenNotRegisteredListener_shouldThrowException() throws Exception {
         RapPlugin plugin = createRapPlugin();

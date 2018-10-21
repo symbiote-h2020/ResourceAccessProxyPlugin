@@ -398,6 +398,18 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     /**
+     * Registers listener for actuating resource.
+     *
+     * @param listener
+     * 
+     * @deprecated Instead of {@link ActuatingResourceListener} use {@link ActuatorAccessListener}
+     */
+    @Deprecated
+    public void registerActuatingResourceListener(ActuatingResourceListener listener) {
+        this.actuatingResourceListener = new ActuatorAccessListenerAdapter(listener);
+    }
+    
+    /**
      * Unregisters listener for actuating resource.
      *
      * @param listener
@@ -407,6 +419,18 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     /**
+     * Unregisters listener for actuating resource.
+     *
+     * @param listener
+     * 
+     * @deprecated Instead of {@link ActuatingResourceListener} use {@link ActuatorAccessListener}
+     */
+    @Deprecated
+    public void unregisterActuatingResourceListener(ActuatingResourceListener listener) {
+        this.actuatingResourceListener = null;
+    }
+    
+    /**
      * Executes actuation of resources.
      *
      * @param internalId internal resource id
@@ -415,7 +439,7 @@ public class RapPlugin implements SmartLifecycle {
      */
     public void doActuateResource(String internalId, Map<String, Map<String, Value>> capabilities) {
         if (actuatingResourceListener == null) {
-            throw new RuntimeException("ActuatingResourceListener not registered in RapPlugin");
+            throw new RuntimeException("ActuatorAccessListener not registered in RapPlugin");
         }
 
         actuatingResourceListener.actuateResource(internalId, capabilities);
