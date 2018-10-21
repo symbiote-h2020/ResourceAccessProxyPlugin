@@ -324,6 +324,19 @@ public class RapPlugin implements SmartLifecycle {
         this.readingResourceListener = listener;
     }
 
+    
+    /**
+     * Registers listener for reading resource.
+     *
+     * @param listener
+     * 
+     * @deprecated Instead of {@link ReadingResourceListener} use {@link ResourceAccessListener}
+     */
+    @Deprecated
+    public void registerReadingResourceListener(ReadingResourceListener listener) {
+        this.readingResourceListener = new ResourceAccessListenerAdapter(listener);
+    }
+    
     /**
      * Unregisters listener for reading resource.
      *
@@ -334,6 +347,17 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     /**
+     * Unregisters listener for reading resource.
+     *
+     * @param listener
+     * 
+     * @deprecated Instead of {@link ReadingResourceListener} use {@link ResourceAccessListener}
+     */
+    @Deprecated
+    public void unregisterReadingResourceListener(ReadingResourceListener listener) {
+        this.readingResourceListener = null;
+    }
+    /**
      * Execute reading resource.
      *
      * @param resourceInfo info to identify requested resource
@@ -341,7 +365,7 @@ public class RapPlugin implements SmartLifecycle {
      */
     public String doReadResource(List<ResourceInfo> resourceInfo) {
         if (readingResourceListener == null) {
-            throw new RuntimeException("ReadingResourceListener not registered in RapPlugin");
+            throw new RuntimeException("ResourceAccessListener not registered in RapPlugin");
         }
 
         return readingResourceListener.getResource(resourceInfo);
@@ -358,7 +382,7 @@ public class RapPlugin implements SmartLifecycle {
      */
     public String doReadResourceHistory(List<ResourceInfo> resourceInfo, int top, Query filterQuery) {
         if (readingResourceListener == null) {
-            throw new RuntimeException("ReadingResourceListener not registered in RapPlugin");
+            throw new RuntimeException("ResourceAccessListener not registered in RapPlugin");
         }
 
         return readingResourceListener.getResourceHistory(resourceInfo, top, filterQuery);
