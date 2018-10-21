@@ -11,6 +11,8 @@ import eu.h2020.symbiote.model.cim.Capability;
  * Listener needs to be registered in RapPlugin.
  * 
  * @author Mario Kušek <mario.kusek@fer.hr>
+ * 
+ * @deprecated Replaced by {@link ActuatorAccessListener}
  */
 public interface ActuatingResourceListener {
     /**  

@@ -10,7 +10,9 @@ import eu.h2020.symbiote.model.cim.Observation;
  * 
  * @author Mario Kušek <mario.kusek@fer.hr>
  *
+ * @deprecated Replaced by {@link ResourceAccessListener}
  */
+@Deprecated
 public interface ReadingResourceListener {
     /**  
      * This method is called when RAP is asking for resource data.
