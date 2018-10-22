@@ -188,7 +188,7 @@ public class RapPlugin implements SmartLifecycle {
             key = "#{rapPlugin.enablerName + '.set'}"
     ))
     public RapPluginResponse fromAmqpSetResource(Message<?> msg) {
-        LOG.debug("actuating resource: {}", msg.getPayload());
+        LOG.debug("actuating/invoking service on resource: {}", msg.getPayload());
 
         try {
             ResourceAccessSetMessage message = deserializeRequest(msg, ResourceAccessSetMessage.class);
@@ -222,7 +222,7 @@ public class RapPlugin implements SmartLifecycle {
             LOG.error(generateErrorResponseMessage("There is error in plugin in actuation/service invocation. RabbitMQ message: ", msg), e);
             return e.getResponse();
         } catch (Exception e) {
-            String responseMsg = generateErrorResponseMessage("Can not set/call service for request: ", msg);
+            String responseMsg = generateErrorResponseMessage("Can not actuate/invoke service for request: ", msg);
             LOG.error(responseMsg, e);
             return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
         }
