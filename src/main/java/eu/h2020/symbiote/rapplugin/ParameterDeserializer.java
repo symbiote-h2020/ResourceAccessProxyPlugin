@@ -91,9 +91,8 @@ public class ParameterDeserializer {
             }
             return result;
         } catch (IOException ex) {
-            Logger.getLogger(ParameterDeserializer.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException("Can not deserialize because I can not access " + registrationHandlerUrl, ex);
         }
-        return null;
     }
 
     private Map<String, String> extractParameters(String parametersJson) throws IOException {

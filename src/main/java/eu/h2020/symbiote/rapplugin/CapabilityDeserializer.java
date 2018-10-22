@@ -70,9 +70,8 @@ public class CapabilityDeserializer {
             }
             return result;
         } catch (IOException ex) {
-            Logger.getLogger(CapabilityDeserializer.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException("Can not deserialize because I can not access " + interworkingInterfaceUrl, ex);
         }
-        return null;
     }
 
     private Map<String, String> extractCapabilities(String capabilitiesJson) throws IOException {
