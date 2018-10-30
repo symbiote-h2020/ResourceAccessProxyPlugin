@@ -28,6 +28,7 @@ import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.SubscriptionListener;
 import eu.h2020.symbiote.rapplugin.value.PrimitiveValue;
 import eu.h2020.symbiote.rapplugin.value.Value;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
@@ -76,7 +77,7 @@ public class RapPluginTest {
     private Map<String, Map<String, Value>> actuatorParameters;
 
     @Before
-    public void initializeData() {
+    public void initializeData() throws IOException {
         resourceSensor = new ResourceInfo(symbioteId, internalId);
         resourceSensor.setType("Sensor");
         resourceActuator = new ResourceInfo(symbioteId, internalId);
@@ -98,7 +99,7 @@ public class RapPluginTest {
     }
 
     private RapPlugin createRapPlugin() {
-        return new RapPlugin(null, RAP_PLUGIN_ID, false, false, "");
+        return new RapPlugin(null, RAP_PLUGIN_ID, false, false);
     }
 
     @Test

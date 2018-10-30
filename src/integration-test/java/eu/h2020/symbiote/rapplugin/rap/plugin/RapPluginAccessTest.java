@@ -112,7 +112,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
 
         @Bean
         public RapPlugin rapPlugin(RabbitManager manager) {
-            return new RapPlugin(manager, RAP_PLUGIN_ID, false, true, "http://localhost/rh");
+            return new RapPlugin(manager, RAP_PLUGIN_ID, false, true);
         }
     }
 
@@ -335,13 +335,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         ActuatorAccessListener listener = Mockito.mock(ActuatorAccessListener.class);
         doThrow(new RuntimeException("exception message"))
             .when(listener).actuateResource(anyString(), anyMap());
-
-        HttpClientMock httpClientMock = new HttpClientMock();
-        httpClientMock
-                .onGet()
-                .withParameter("resourceInternalId", containsString(""))
-                .doReturnJSON(mapper.writeValueAsString(cloudResourceActuator));
-        CapabilityDeserializer.setHttpClient(httpClientMock);
+        
         rapPlugin.registerActuatingResourceListener(listener);
         String parameters = mapper.writeValueAsString(actuatorParameters);
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(Arrays.asList(resourceActuator), parameters);
@@ -354,33 +348,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         assertThat(response).isInstanceOf(RapPluginErrorResponse.class);
         RapPluginErrorResponse errResponse = (RapPluginErrorResponse) response;
         assertThat(errResponse.getResponseCode()).isEqualTo(500);
-    }
-    
-    @Test @DirtiesContext
-    public void sendingResourceAccessActuationWhenRHisDown_shouldReturn500() throws Exception {
-        //given
-        ActuatorAccessListener writingListener = Mockito.mock(ActuatorAccessListener.class);
-        
-        rapPlugin.registerActuatingResourceListener(writingListener);
-        
-        ResourceInfo resourceInfo = new ResourceInfo(symbioteId, internalId);
-        resourceInfo.setType("Actuator");
-        List<ResourceInfo> infoList = Arrays.asList(resourceInfo);
-        String body = mapper.writeValueAsString(actuatorParameters);
-        ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
-        String json = mapper.writeValueAsString(msg);
-        
-        HttpClientMock httpClientMock = new HttpClientMock();
-        CapabilityDeserializer.setHttpClient(httpClientMock);
-        
-        // when
-        Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, json);          
-    
-        //then
-        assertThat(returnedObject).isInstanceOf(RapPluginErrorResponse.class);
-        RapPluginErrorResponse response = (RapPluginErrorResponse) returnedObject;
-        assertThat(response.getResponseCode()).isEqualTo(500);        
-    }
+    }      
 
     @Test @DirtiesContext
     public void sendingResourceAccessActuation_shouldReturn204() throws Exception {
@@ -395,13 +363,6 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         String body = mapper.writeValueAsString(actuatorParameters); //createCapabilityRabbitMessage(parameterList);
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
         String json = mapper.writeValueAsString(msg);
-        
-        HttpClientMock httpClientMock = new HttpClientMock();
-        httpClientMock
-                .onGet()
-                .withParameter("resourceInternalId", containsString(""))
-                .doReturnJSON(mapper.writeValueAsString(cloudResourceActuator));
-        CapabilityDeserializer.setHttpClient(httpClientMock);
         
         // when
         Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, json);          
@@ -433,13 +394,6 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         String body = mapper.writeValueAsString(actuatorParameters); //createCapabilityRabbitMessage(parameterList);
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
         String json = mapper.writeValueAsString(msg);
-        
-        HttpClientMock httpClientMock = new HttpClientMock();
-        httpClientMock
-                .onGet()
-                .withParameter("resourceInternalId", containsString(""))
-                .doReturnJSON(mapper.writeValueAsString(cloudResourceActuator));
-        CapabilityDeserializer.setHttpClient(httpClientMock);
         
         // when
         Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, json);          
@@ -473,13 +427,6 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
         String json = mapper.writeValueAsString(msg);
         
-        HttpClientMock httpClientMock = new HttpClientMock();
-        httpClientMock
-                .onGet()
-                .withParameter("resourceInternalId", containsString(""))
-                .doReturnJSON(mapper.writeValueAsString(cloudResourceActuator));
-        CapabilityDeserializer.setHttpClient(httpClientMock);
-        
         // when
         Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, RABBIT_ROUTING_KEY_SET, json);          
     
@@ -498,13 +445,6 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         when(listener.invokeService(any(), any()))
                 .thenThrow(new RapPluginException(500, "Some Internal Test Error"));
         rapPlugin.registerInvokingServiceListener(listener);
-
-        HttpClientMock httpClientMock = new HttpClientMock();
-        httpClientMock
-                .onGet()
-                .withParameter("resourceInternalId", containsString(""))
-                .doReturnJSON(mapper.writeValueAsString(cloudResourceService));
-        ParameterDeserializer.setHttpClient(httpClientMock);
 
         String parameters = mapper.writeValueAsString(serviceParameters);
         ResourceAccessSetMessage setMessage = new ResourceAccessSetMessage(Arrays.asList(resourceService), parameters);
@@ -535,7 +475,6 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
                 .onGet()
                 .withParameter("resourceInternalId", containsString(""))
                 .doReturnJSON(mapper.writeValueAsString(cloudResourceService));
-        ParameterDeserializer.setHttpClient(httpClientMock);
 
         String parameters = mapper.writeValueAsString(serviceParameters);
         ResourceAccessSetMessage setMessage = new ResourceAccessSetMessage(Arrays.asList(resourceService), parameters);

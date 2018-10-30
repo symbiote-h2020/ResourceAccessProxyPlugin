@@ -11,24 +11,13 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import eu.h2020.symbiote.model.cim.ComplexDatatype;
-import eu.h2020.symbiote.model.cim.ComplexProperty;
-import eu.h2020.symbiote.model.cim.DataProperty;
-import eu.h2020.symbiote.model.cim.Datatype;
-import eu.h2020.symbiote.model.cim.PrimitiveDatatype;
-import eu.h2020.symbiote.model.cim.PrimitiveProperty;
-import eu.h2020.symbiote.rapplugin.DeserializerRegistry;
+import com.google.common.collect.Lists;
 import eu.h2020.symbiote.rapplugin.util.Utils;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import org.apache.jena.datatypes.DatatypeFormatException;
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.shared.PrefixMapping;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -36,123 +25,56 @@ import org.apache.jena.shared.PrefixMapping;
  */
 public class ValueDeserializer extends StdDeserializer<Value> {
 
-    private DeserializerRegistry deserializerRegistry;
-    private Datatype datatype;
-
-    public ValueDeserializer(Datatype datatype, DeserializerRegistry deserializerRegistry) {
-        this((Class<?>) null, deserializerRegistry);
-        this.datatype = datatype;
+    public ValueDeserializer() {
+        this((Class<?>) null);
     }
 
-    private ValueDeserializer(Class<?> vc, DeserializerRegistry deserializerRegistry) {
+    private ValueDeserializer(Class<?> vc) {
         super(vc);
-        this.deserializerRegistry = deserializerRegistry == null ? new DeserializerRegistry() : deserializerRegistry;
+    }
+
+    private Value deserialize(JsonNode node) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonParser jsonParser = mapper.getFactory().createParser(node.toString());
+        DeserializationContext deserializationContext = mapper.getDeserializationContext();
+        return deserialize(jsonParser, deserializationContext);
     }
 
     @Override
     public Value deserialize(JsonParser jp, DeserializationContext dc) throws JsonProcessingException, IOException {
-        if (!datatype.isArray() && deserializerRegistry.hasDeserializer(datatype)) {
-            Object deserializedObject = deserializerRegistry.getDeserializer(datatype)
-                    .deserialize(jp, dc);
-            if (Value.class.isAssignableFrom(deserializedObject.getClass())) {
-                return (Value) deserializedObject;
-            } else {
-                return new CustomTypeValue(deserializedObject);
-            }
-        }
         JsonNode root = jp.getCodec().readTree(jp);
-        if (Utils.isPrimitiveDatatype(datatype)) {
-            PrimitiveDatatype primitiveDatatype = (PrimitiveDatatype) datatype;
-            RDFDatatype rdfDatatype = TypeMapper.getInstance().getTypeByName(
-                    PrefixMapping.Extended.expandPrefix(primitiveDatatype.getBaseDatatype()));
-            if (rdfDatatype == null) {
-                throw new RuntimeException("unknown primitive datatype '" + primitiveDatatype.getBaseDatatype() + "'");
+        if (root.isValueNode()) {
+            Object foo = root.asText();
+            if (!root.isTextual()) {
+                foo = new ObjectMapper().readValue(foo.toString(), Object.class);
             }
-            if (datatype.isArray()) {
-                // array of primitive datatype
-                if (!root.isArray()) {
-                    throw new RuntimeException("parameter with isArray=true must contain array");
-                }
-                if (rdfDatatype.getJavaClass() == null) {
-                    throw new RuntimeException("no representing java class found for datatype '" + primitiveDatatype.getBaseDatatype() + "'");
-                }
-                List<JsonNode> elements = Utils.toList(root.elements());
-                Object array = Array.newInstance(rdfDatatype.getJavaClass(), elements.size());
-                for (int i = 0; i < elements.size(); i++) {
-                    Array.set(array, i, parseValue(elements.get(i), rdfDatatype));
-                }
-                return new PrimitiveValue(array, rdfDatatype.getURI(), true);
-            } else {
-                // single primitive datatype
-                return new PrimitiveValue(
-                        parseValue(root, rdfDatatype),
-                        rdfDatatype.getURI());
-            }
-        } else if (Utils.isComplexDatatype(datatype)) {
-            ComplexDatatype complexDatatype = (ComplexDatatype) datatype;
-            ComplexValue result = new ComplexValue();
-            if (datatype.isArray()) {
-                if (!root.isArray()) {
-                    throw new RuntimeException("parameter with isArray=true must contain array");
-                }
-                List<Value> values = new ArrayList<>();
-                complexDatatype.setArray(false);
-                for (JsonNode node : Utils.toList(root.elements())) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    JsonParser jsonParser = mapper.getFactory().createParser(node.toString());
-                    DeserializationContext deserializationContext = mapper.getDeserializationContext();
-                    Datatype temp = this.datatype;
-                    values.add(deserialize(jsonParser, deserializationContext));
-                }
-                return new ComplexValueArray(values);
-            } else {
-                if (!root.isObject()) {
-                    throw new RuntimeException("parameter with complex datatype must contain object");
-                }
-                // recurse for fields of complex datatype
-                Map<String, JsonNode> fields = Utils.toMap(root.fields());
-                for (Map.Entry<String, JsonNode> field : fields.entrySet()) {
-                    result.addValue(field.getKey(), recurse(field.getValue(), complexDatatype, field.getKey()));
+            return new PrimitiveValue(foo);
+        } else if (root.isArray()) {
+            List<JsonNode> elements = Lists.newArrayList(root.elements());
+            Long primitiveElementCount = elements.stream()
+                    .filter(x -> x.isValueNode())
+                    .collect(Collectors.counting());
+            if (primitiveElementCount == 0) {
+                // all elements are complex
+                ComplexValueArray result = new ComplexValueArray();
+                Iterator<JsonNode> elementIterator = root.elements();
+                while (elementIterator.hasNext()) {
+                    result.get().add(deserialize(elementIterator.next()));
                 }
                 return result;
+            } else if (primitiveElementCount == elements.size()) {
+                // all elements are primitive
+                return new PrimitiveValue(jp.getCurrentValue());
+            } else {
+                throw new RuntimeException("found mixed array of primitive and non-primitive values");
             }
+        } else if (root.isObject()) {
+            ComplexValue result = new ComplexValue();
+            for (Map.Entry<String, JsonNode> field : Utils.toMap(root.fields()).entrySet()) {
+                result.addValue(field.getKey(), deserialize(field.getValue()));
+            }
+            return result;
         }
-        throw new RuntimeException();
-    }
-
-    private Datatype getSubDatatype(ComplexDatatype datatype, String field) {
-        Optional<DataProperty> subDatatype = datatype.getDataProperties().stream().filter(x -> x.getName().equals(field)).findAny();
-        if (!subDatatype.isPresent()) {
-            throw new RuntimeException("property '" + field + "' not defined in datatype");
-        }
-        if (PrimitiveProperty.class.isAssignableFrom(subDatatype.get().getClass())) {
-            return ((PrimitiveProperty) subDatatype.get()).getPrimitiveDatatype();
-        } else if (ComplexProperty.class.isAssignableFrom(subDatatype.get().getClass())) {
-            return ((ComplexProperty) subDatatype.get()).getDatatype();
-        }
-        throw new RuntimeException("unknown subclass of DataProperty used");
-    }
-
-    private Value recurse(JsonNode objectNode, ComplexDatatype datatype, String field) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonParser jsonParser = mapper.getFactory().createParser(objectNode.toString());
-        DeserializationContext deserializationContext = mapper.getDeserializationContext();
-        Datatype temp = this.datatype;
-        this.datatype = getSubDatatype(datatype, field);
-        Value result = deserialize(jsonParser, deserializationContext);
-        this.datatype = temp;
-        return result;
-    }
-
-    private Object parseValue(JsonNode node, RDFDatatype rdfDatatype) {
-        if (!node.isValueNode()) {
-            throw new RuntimeException("parameter with primitive datatype must contain single value");
-        }
-        String value = node.isTextual() ? node.asText() : node.toString();
-        try {
-            return rdfDatatype.parse(value);
-        } catch (DatatypeFormatException ex) {
-            throw new RuntimeException("value '" + value + "' could not be parsed to datatype '" + rdfDatatype.getURI() + "'");
-        }
+        throw new RuntimeException("unkown JSON content");
     }
 }

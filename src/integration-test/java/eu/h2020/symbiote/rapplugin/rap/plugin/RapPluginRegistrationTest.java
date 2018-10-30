@@ -56,7 +56,7 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
     public static class TestConfiguration {
         @Bean
         public RapPlugin rapPlugin(RabbitManager manager) {
-            return new RapPlugin(manager, "platId", false, true, "");
+            return new RapPlugin(manager, "platId", false, true);
         }
 
         @Bean

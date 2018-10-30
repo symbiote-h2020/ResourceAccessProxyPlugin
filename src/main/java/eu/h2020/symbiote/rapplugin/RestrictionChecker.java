@@ -13,8 +13,8 @@ import eu.h2020.symbiote.model.cim.RegExRestriction;
 import eu.h2020.symbiote.model.cim.Restriction;
 import eu.h2020.symbiote.model.cim.StepRestriction;
 import eu.h2020.symbiote.rapplugin.util.Utils;
-import eu.h2020.symbiote.rapplugin.value.PrimitiveValue;
-import eu.h2020.symbiote.rapplugin.value.Value;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.datatypes.xsd.impl.RDFLangString;
+import org.apache.jena.rdf.model.Literal;
 
 /**
  *
@@ -71,31 +72,30 @@ public class RestrictionChecker {
     private RestrictionChecker() {
     }
 
-    public static boolean checkRestrictions(Value value, Restriction... restrictions) {
-        return checkRestrictions(value, Stream.of(restrictions));
+    public static void checkRestrictions(Object value, RDFDatatype rdfDatatype, Restriction... restrictions) throws ValidationException {
+        checkRestrictions(value, rdfDatatype, Stream.of(restrictions));
     }
 
-    public static boolean checkRestrictions(Value value, List<Restriction> restrictions) {
-        if (restrictions == null) {
-            return true;
+    public static void checkRestrictions(Object value, RDFDatatype rdfDatatype, List<Restriction> restrictions) throws ValidationException {
+        if (restrictions != null) {
+            for (Restriction restriction : restrictions) {
+                checkRestriction(value, rdfDatatype, restriction);
+            }
         }
-        return checkRestrictions(value, restrictions.stream());
     }
 
-    public static boolean checkRestrictions(Value value, Stream<Restriction> restrictions) {
-        return restrictions.allMatch(x -> checkRestriction(value, x));
-    }
-
-    public static boolean checkRestriction(Value value, Restriction restriction) {
-        if (!PrimitiveValue.class.isAssignableFrom(value.getClass())) {
-            throw new RuntimeException("restrictions not allowed on complex values");
+    public static void checkRestrictions(Object value, RDFDatatype rdfDatatype, Stream<Restriction> restrictions) throws ValidationException {
+        if (restrictions != null) {
+            checkRestrictions(value, rdfDatatype, restrictions.collect(Collectors.toList()));
         }
-        PrimitiveValue primitiveValue = (PrimitiveValue) value;
+    }
+
+    public static void checkRestriction(Object value, RDFDatatype rdfDatatype, Restriction restriction) throws ValidationException {
         if (RESTRICTIONS_TYPE_RESTRICTIONS.containsKey(restriction.getClass())) {
             if (!RESTRICTIONS_TYPE_RESTRICTIONS.get(restriction.getClass()).isEmpty()
                     && !RESTRICTIONS_TYPE_RESTRICTIONS.get(restriction.getClass()).stream()
-                            .anyMatch(x -> x.getURI().equals(primitiveValue.getDatatype()))) {
-                throw new RuntimeException("invalid datatype '" + primitiveValue.getDatatype() + "' for restriction type '" + restriction.getClass().getSimpleName() + "'. \r\n"
+                            .anyMatch(x -> x.getURI().equals(rdfDatatype))) {
+                throw new RuntimeException("invalid datatype '" + rdfDatatype + "' for restriction type '" + restriction.getClass().getSimpleName() + "'. \r\n"
                         + "supported datatypes are "
                         + RESTRICTIONS_TYPE_RESTRICTIONS.get(restriction.getClass()).stream()
                                 .map(x -> x.getURI())
@@ -103,48 +103,73 @@ public class RestrictionChecker {
             }
         }
         if (StepRestriction.class.isAssignableFrom(restriction.getClass())) {
-            return checkStepRestriction((StepRestriction) restriction, primitiveValue);
+            checkStepRestriction((StepRestriction) restriction, value);
         } else if (RangeRestriction.class.isAssignableFrom(restriction.getClass())) {
-            return checkRangeRestriction((RangeRestriction) restriction, primitiveValue);
+            checkRangeRestriction((RangeRestriction) restriction, value);
         } else if (LengthRestriction.class.isAssignableFrom(restriction.getClass())) {
-            return checkLengthRestriction((LengthRestriction) restriction, primitiveValue);
+            checkLengthRestriction((LengthRestriction) restriction, value);
         } else if (EnumRestriction.class.isAssignableFrom(restriction.getClass())) {
-            return checkEnumRestriction((EnumRestriction) restriction, primitiveValue);
+            checkEnumRestriction((EnumRestriction) restriction, value);
         } else if (RegExRestriction.class.isAssignableFrom(restriction.getClass())) {
-            return checkRegExRestriction((RegExRestriction) restriction, primitiveValue);
+            checkRegExRestriction((RegExRestriction) restriction, value);
         } else if (InstanceOfRestriction.class.isAssignableFrom(restriction.getClass())) {
-            return checkInstanceOfRestriction((InstanceOfRestriction) restriction, primitiveValue);
+            checkInstanceOfRestriction((InstanceOfRestriction) restriction, value);
         }
-        return false;
     }
 
-    private static boolean checkRangeRestriction(RangeRestriction restriction, PrimitiveValue value) {
-        return restriction.getMin() <= value.asNumber().doubleValue()
-                && restriction.getMax() >= value.asNumber().doubleValue();
+    private static Number asNumber(Object value) throws ValidationException {
+        try {
+            return NumberFormat.getInstance().parse(value.toString());
+        } catch (ParseException ex) {
+            throw new ValidationException("value '" + value + "' cannot be converted to datatype '" + Number.class.getSimpleName() + "'", ex);
+        }
     }
 
-    private static boolean checkStepRestriction(StepRestriction restriction, PrimitiveValue value) {
-        return checkRangeRestriction((RangeRestriction) restriction, value)
-                && (value.asNumber().doubleValue() % ((StepRestriction) restriction).getStep()) == 0;
+    private static String asString(Object value) throws ValidationException {
+        return value.toString();
     }
 
-    private static boolean checkLengthRestriction(LengthRestriction restriction, PrimitiveValue value) {
-        return restriction.getMin() <= value.asString().length()
-                && restriction.getMax() >= value.asString().length();
+    private static void checkRangeRestriction(RangeRestriction restriction, Object value) throws ValidationException {
+        if (!(restriction.getMin() <= asNumber(value).doubleValue()
+                && restriction.getMax() >= asNumber(value).doubleValue())) {
+            throw new ValidationException("value must be numeric, >= " + restriction.getMin() + " and <= " + restriction.getMax());
+        }
     }
 
-    private static boolean checkEnumRestriction(EnumRestriction restriction, PrimitiveValue value) {
-        return restriction.getValues().contains(value.asString());
+    private static void checkStepRestriction(StepRestriction restriction, Object value) throws ValidationException {
+        checkRangeRestriction((RangeRestriction) restriction, value);
+        if (!((asNumber(value).doubleValue() % ((StepRestriction) restriction).getStep()) == 0)) {
+            throw new ValidationException("value must multiple of " + ((StepRestriction) restriction).getStep());
+        }
     }
 
-    private static boolean checkInstanceOfRestriction(InstanceOfRestriction restriction, PrimitiveValue value) {
-        return Utils.getPropertiesForClassFromPIM("", restriction.getInstanceOfClass(), restriction.getValueProperty()).stream()
-                .anyMatch(x -> x.getDatatype().isValidValue(value.get())
-                && Objects.equals(x.getValue(), value.get()));
+    private static void checkLengthRestriction(LengthRestriction restriction, Object value) throws ValidationException {
+        if (!(restriction.getMin() <= asString(value).length()
+                && restriction.getMax() >= asString(value).length())) {
+            throw new ValidationException("string length must be >= " + restriction.getMin() + " and >= " + restriction.getMax());
+        }
     }
 
-    private static boolean checkRegExRestriction(RegExRestriction restriction, PrimitiveValue value) {
-        return value.asString().matches(restriction.getPattern());
+    private static void checkEnumRestriction(EnumRestriction restriction, Object value) throws ValidationException {
+        if (!restriction.getValues().contains(asString(value))) {
+            throw new ValidationException("value '" + value + "' not allowed, must be one of [" + String.join(", ", restriction.getValues()) + "]");
+        }
+    }
+
+    private static void checkInstanceOfRestriction(InstanceOfRestriction restriction, Object value) throws ValidationException {
+        List<Literal> allowedValues = Utils.getPropertiesForClassFromPIM("", restriction.getInstanceOfClass(), restriction.getValueProperty());
+        if (!allowedValues.stream().anyMatch(x -> x.getDatatype().isValidValue(value) && Objects.equals(x.getValue(), value))) {
+            throw new ValidationException(
+                    "value '" + value + "' must be property '" + restriction.getValueProperty() + "' of an instance of class '" + restriction.getInstanceOfClass() + "' in PIM. "
+                    + "Allowed values are [" + allowedValues.stream().map(x -> x.getValue().toString()).collect(Collectors.joining(", ")) + "]");
+        }
+
+    }
+
+    private static void checkRegExRestriction(RegExRestriction restriction, Object value) throws ValidationException {
+        if (!asString(value).matches(restriction.getPattern())) {
+            throw new ValidationException("value '" + value + "' does not match regex pattern '" + restriction.getPattern() + "'");
+        }
     }
 
 }

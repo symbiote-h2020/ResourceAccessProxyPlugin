@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.rapplugin.value;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Objects;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -11,7 +12,6 @@ import org.apache.jena.datatypes.TypeMapper;
 public class PrimitiveValue<T> implements Value<T> {
 
     private final T value;
-    private final String datatype;
     private final boolean isArray;
 
     public static <T> PrimitiveValue<T> create(T value) {
@@ -19,28 +19,22 @@ public class PrimitiveValue<T> implements Value<T> {
         if (datatype == null) {
             throw new RuntimeException("unable to determine RDF datatype of value '" + value + "'");
         }
-        return new PrimitiveValue<T>(value, datatype.getURI());
+        return new PrimitiveValue<>(value);
     }
 
-    public PrimitiveValue(T value, String datatype) {
+    public PrimitiveValue(T value) {
         isArray = false;
         this.value = value;
-        this.datatype = datatype;
     }
 
-    public PrimitiveValue(T value, String datatype, boolean isArray) {
+    public PrimitiveValue(T value, boolean isArray) {
         this.value = value;
-        this.datatype = datatype;
         this.isArray = isArray;
     }
 
     @Override
     public T get() {
         return value;
-    }
-
-    public String getDatatype() {
-        return datatype;
     }
 
     public boolean isArray() {
@@ -97,7 +91,6 @@ public class PrimitiveValue<T> implements Value<T> {
     public int hashCode() {
         int hash = 7;
         hash = 67 * hash + Objects.hashCode(this.value);
-        hash = 67 * hash + Objects.hashCode(this.datatype);
         hash = 67 * hash + (this.isArray ? 1 : 0);
         return hash;
     }
@@ -115,9 +108,6 @@ public class PrimitiveValue<T> implements Value<T> {
         }
         final PrimitiveValue<?> other = (PrimitiveValue<?>) obj;
         if (this.isArray != other.isArray) {
-            return false;
-        }
-        if (!Objects.equals(this.datatype, other.datatype)) {
             return false;
         }
         if (!Objects.equals(this.value, other.value)) {

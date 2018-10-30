@@ -80,17 +80,12 @@ public class RapPlugin implements SmartLifecycle {
 
     private ObjectMapper mapper;
 
-    private DeserializerRegistry deserializerRegistry;
-
-    private final String registrationHandlerUrl;
-
     @Autowired
     public RapPlugin(RabbitManager rabbitManager, Properties props) {
         this(rabbitManager,
                 props.getPluginName(),
                 props.getPlugin().isFiltersSupported(),
-                props.getPlugin().isNotificationsSupported(),
-                props.getPlugin().getRegistrationHandlerUrl()
+                props.getPlugin().isNotificationsSupported()
         );
     }
 
@@ -98,14 +93,11 @@ public class RapPlugin implements SmartLifecycle {
             RabbitManager rabbitManager, 
             String enablerName, 
             boolean filtersSupported,
-            boolean notificationsSupported,
-            String registrationHandlerUrl) {
+            boolean notificationsSupported) {
         this.rabbitManager = rabbitManager;
         this.enablerName = enablerName;
         this.filtersSupported = filtersSupported;
         this.notificationsSupported = notificationsSupported;
-        this.deserializerRegistry = new DeserializerRegistry();
-        this.registrationHandlerUrl = registrationHandlerUrl;
         mapper = new ObjectMapper();
     }
 
@@ -202,18 +194,12 @@ public class RapPlugin implements SmartLifecycle {
             // TODO if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
                 // actuation
                 doActuateResource(internalId,
-                        CapabilityDeserializer.deserialize(registrationHandlerUrl, 
-                                getDeserializerRegistry(),
-                                internalId,
-                                message.getBody()));
+                        CapabilityDeserializer.deserialize(message.getBody()));
                 return new RapPluginOkResponse();
             } else if (message.getBody().trim().startsWith("[")) {
             // TODO } else if (TYPE_SERVICE.equalsIgnoreCase(lastResourceInfo.getType())) {
                 return new RapPluginOkResponse(doInvokeService(internalId,
-                        ParameterDeserializer.deserialize(registrationHandlerUrl, 
-                                getDeserializerRegistry(),
-                                internalId,
-                                message.getBody())));
+                        ParameterDeserializer.deserialize(message.getBody())));
             } else {
                 throw new RapPluginException(HttpStatus.BAD_REQUEST.value(), "SET not allowed on resource type '" + lastResourceInfo.getType() + "'");
             }
@@ -578,13 +564,5 @@ public class RapPlugin implements SmartLifecycle {
     @Override
     public int getPhase() {
         return Integer.MAX_VALUE - 100;
-    }
-
-    public DeserializerRegistry getDeserializerRegistry() {
-        return deserializerRegistry;
-    }
-
-    public void setDeserializerRegistry(DeserializerRegistry deserializerRegistry) {
-        this.deserializerRegistry = deserializerRegistry;
     }
 }

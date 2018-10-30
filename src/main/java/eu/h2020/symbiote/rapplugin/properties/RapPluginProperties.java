@@ -33,12 +33,4 @@ public class RapPluginProperties {
      * Default value is <code>false</code>.
      */
     private boolean notificationsSupported = false;
-    
-    /**
-     * URL of registration handler.
-     * 
-     * Property: <code>rap-plugin.registrationHandlerUrl</code>. 
-     * Default value is <code>http://localhost/rh</code>.
-     */
-    private String registrationHandlerUrl = "http://localhost/rh";
 }
