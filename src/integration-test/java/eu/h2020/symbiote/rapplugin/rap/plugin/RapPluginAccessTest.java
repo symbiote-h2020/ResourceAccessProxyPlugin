@@ -53,6 +53,7 @@ import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.model.cim.Actuator;
 import eu.h2020.symbiote.model.cim.Capability;
 import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;
+import eu.h2020.symbiote.rapplugin.messaging.RabbitConfiguration;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
@@ -80,13 +81,17 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @Import({RabbitManager.class,
     TestingRabbitConfig.class,
-    RapPluginProperties.class})
+    RapPluginProperties.class,
+    RabbitConfiguration.class})
 @EnableConfigurationProperties({RabbitProperties.class, RapPluginProperties.class})
+@TestPropertySource("classpath:rabbitReplyTimeout.properties")
 @DirtiesContext
 /**
  * @author Mario Kušek <mario.kusek@fer.hr>
@@ -105,7 +110,8 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     private static final String RABBIT_ROUTING_KEY_SET = RAP_PLUGIN_ID + ".set";
     private static final String RABBIT_ROUTING_KEY_HISTORY = RAP_PLUGIN_ID + ".history";
 
-    private static final int RECEIVE_TIMEOUT = 20_000;
+    @org.springframework.beans.factory.annotation.Value("${rabbit.replyTimeout}")
+    private int rabbitReceiveTimeout;
 
     @Configuration
     public static class TestConfiguration {
@@ -233,7 +239,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     }
 
     private void initializeRabbitResources() throws Exception {
-        rabbitTemplate.setReplyTimeout(RECEIVE_TIMEOUT);
+        rabbitTemplate.setReplyTimeout(rabbitReceiveTimeout);
         connection = factory.createConnection();
         channel = connection.createChannel(false);
         createRabbitResources();

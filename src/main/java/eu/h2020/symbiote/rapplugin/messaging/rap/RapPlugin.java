@@ -11,6 +11,7 @@ import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.annotation.Argument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.messaging.Message;
@@ -107,10 +108,13 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of reading resource
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue,
+            value = @Queue(arguments= 
+                {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.get'}"
-    ))
+        ),
+        containerFactory = "noRequeueRabbitContainerFactory"
+    )
     public RapPluginResponse fromAmqpReadResource(Message<?> msg) {
         LOG.debug("reading resource: {}", msg.getPayload());
 
@@ -145,10 +149,13 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of reading history
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue,
+            value = @Queue(arguments= 
+                {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.history'}"
-    ))
+        ),
+        containerFactory = "noRequeueRabbitContainerFactory"
+    )
     public RapPluginResponse fromAmqpHistoryResource(Message<?> msg) {
         LOG.debug("reading history resource: {}", msg.getPayload());
 
@@ -174,13 +181,16 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of actuating or invoking service
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue,
+            value = @Queue(arguments= 
+                {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.set'}"
-    ))
+        ),
+        containerFactory = "noRequeueRabbitContainerFactory"
+    )
     public RapPluginResponse fromAmqpSetResource(Message<?> msg) {
         LOG.debug("actuating/invoking service on resource: {}", msg.getPayload());
-
+        
         try {
             ResourceAccessSetMessage message = deserializeRequest(msg, ResourceAccessSetMessage.class);
             List<ResourceInfo> resourceInfo = message.getResourceInfo();
@@ -234,6 +244,7 @@ public class RapPlugin implements SmartLifecycle {
             throw new RuntimeException("Can not cast payload to byte[] or string. Payload is of type "
                     + msg.getPayload().getClass().getName() + ". Payload: " + msg.getPayload());
         }
+
         O obj = mapper.readValue(stringMsg, clazz);
         return obj;
     }

@@ -25,12 +25,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
 
 import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;
+import eu.h2020.symbiote.rapplugin.messaging.RabbitConfiguration;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapDefinitions;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
@@ -41,16 +43,18 @@ import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
 
 @RunWith(SpringRunner.class)
 @Import({TestingRabbitConfig.class,
-    RapPluginProperties.class})
+    RapPluginProperties.class,
+    RabbitConfiguration.class})
 @EnableConfigurationProperties({RabbitProperties.class, RapPluginProperties.class})
+@TestPropertySource("classpath:rabbitReplyTimeout.properties")
 @DirtiesContext
 public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
     private static final String PLUGIN_REGISTRATION_EXCHANGE = RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_OUT;
     private static final String PLUGIN_REGISTRATION_QUEUE_NAME = "test_plugin_registration";
     private static final String PLUGIN_REGISTRATION_KEY = RapDefinitions.PLUGIN_REGISTRATION_KEY;
     
-    private static final int RECEIVE_TIMEOUT = 20_000;
-
+    @org.springframework.beans.factory.annotation.Value("${rabbit.replyTimeout}")
+    private int rabbitReceiveTimeout;
     
     @Configuration
     public static class TestConfiguration {
@@ -111,7 +115,7 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
         rapPlugin.start();
     
         //then
-        Message message = rabbitTemplate.receive(PLUGIN_REGISTRATION_QUEUE_NAME, RECEIVE_TIMEOUT);
+        Message message = rabbitTemplate.receive(PLUGIN_REGISTRATION_QUEUE_NAME, rabbitReceiveTimeout);
         assertNotNull(message);
         
         String jsonBody = new String(message.getBody(), StandardCharsets.UTF_8);
@@ -130,7 +134,7 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
         rapPlugin.stop();
     
         //then
-        Message message = rabbitTemplate.receive(PLUGIN_REGISTRATION_QUEUE_NAME, RECEIVE_TIMEOUT);
+        Message message = rabbitTemplate.receive(PLUGIN_REGISTRATION_QUEUE_NAME, rabbitReceiveTimeout);
         assertNotNull(message);
         
         String jsonBody = new String(message.getBody(), StandardCharsets.UTF_8);
