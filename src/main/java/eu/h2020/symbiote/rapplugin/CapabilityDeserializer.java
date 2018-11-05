@@ -19,21 +19,22 @@ import java.util.Map;
  */
 public class CapabilityDeserializer {
 
-    public static Map<String, Map<String, Value>> deserialize(String capabilitiesJson) throws ValidationException {
-        return new CapabilityDeserializer().deserializeInternal(capabilitiesJson);
+    private ParameterDeserializer parameterDeserializer;
+    private ObjectMapper objectMapper;
+
+    public CapabilityDeserializer() {
+        objectMapper = new ObjectMapper();
+        parameterDeserializer = new ParameterDeserializer();
     }
 
-    private CapabilityDeserializer() {
-    }
-
-    private Map<String, Map<String, Value>> deserializeInternal(String capabilitiesJson) throws ValidationException {
+    public Map<String, Map<String, Value>> deserialize(String capabilitiesJson) throws ValidationException {
         Map<String, Map<String, Value>> result = new HashMap<>();
         try {
             Map<String, String> capabilitiesPresent = extractCapabilities(capabilitiesJson);
             for (Map.Entry<String, String> capabilityPresent : capabilitiesPresent.entrySet()) {
                 result.put(
                         capabilityPresent.getKey(),
-                        ParameterDeserializer.deserialize(capabilityPresent.getValue()));
+                        parameterDeserializer.deserialize(capabilityPresent.getValue()));
             }
             return result;
         } catch (IOException ex) {
@@ -43,7 +44,7 @@ public class CapabilityDeserializer {
 
     private Map<String, String> extractCapabilities(String capabilitiesJson) throws IOException {
         Map<String, String> result = new HashMap<>();
-        JsonParser parser = new ObjectMapper().getFactory().createParser(capabilitiesJson);
+        JsonParser parser = objectMapper.getFactory().createParser(capabilitiesJson);
         JsonNode node = parser.readValueAsTree();
         if (!node.isObject()) {
             throw new RuntimeException("provided JSON is not an object");

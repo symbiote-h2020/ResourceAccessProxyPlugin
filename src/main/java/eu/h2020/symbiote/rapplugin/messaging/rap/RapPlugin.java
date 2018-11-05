@@ -80,6 +80,10 @@ public class RapPlugin implements SmartLifecycle {
 
     private ObjectMapper mapper;
 
+    private ParameterDeserializer parameterDeserializer;
+    
+    private CapabilityDeserializer capabilityDeserializer;
+
     @Autowired
     public RapPlugin(RabbitManager rabbitManager, Properties props) {
         this(rabbitManager,
@@ -99,6 +103,8 @@ public class RapPlugin implements SmartLifecycle {
         this.filtersSupported = filtersSupported;
         this.notificationsSupported = notificationsSupported;
         mapper = new ObjectMapper();
+        parameterDeserializer = new ParameterDeserializer();
+        capabilityDeserializer = new CapabilityDeserializer();
     }
 
     /**
@@ -203,12 +209,12 @@ public class RapPlugin implements SmartLifecycle {
             // TODO if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
                 // actuation
                 doActuateResource(internalId,
-                        CapabilityDeserializer.deserialize(message.getBody()));
+                        capabilityDeserializer.deserialize(message.getBody()));
                 return new RapPluginOkResponse();
             } else if (message.getBody().trim().startsWith("[")) {
             // TODO } else if (TYPE_SERVICE.equalsIgnoreCase(lastResourceInfo.getType())) {
                 return new RapPluginOkResponse(doInvokeService(internalId,
-                        ParameterDeserializer.deserialize(message.getBody())));
+                        parameterDeserializer.deserialize(message.getBody())));
             } else {
                 throw new RapPluginException(HttpStatus.BAD_REQUEST.value(), "SET not allowed on resource type '" + lastResourceInfo.getType() + "'");
             }

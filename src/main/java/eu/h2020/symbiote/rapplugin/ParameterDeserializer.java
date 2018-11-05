@@ -16,30 +16,32 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.springframework.stereotype.Component;
+
 /**
  *
  * @author Michael Jacoby <michael.jacoby@iosb.fraunhofer.de>
  */
 public class ParameterDeserializer {
 
-    private ParameterDeserializer() {
+    private ValueDeserializer valueDeserializer;
+    private ObjectMapper mapper;
+
+    public ParameterDeserializer() {
+        valueDeserializer = new ValueDeserializer();
+        mapper = new ObjectMapper();
     }
 
-    public static Map<String, Value> deserialize(String parametersJson) throws ValidationException {
-        return new ParameterDeserializer().deserializeInternal(parametersJson);
-    }
-
-    private Map<String, Value> deserializeInternal(String parametersJson) throws ValidationException {
+    public Map<String, Value> deserialize(String parametersJson) throws ValidationException {
         Map<String, Value> result = new HashMap<>();
         try {
             Map<String, String> parametersPresent = extractParameters(parametersJson);
             for (Map.Entry<String, String> parameterPresent : parametersPresent.entrySet()) {
 
                 Value deserializedValue = null;
-                ObjectMapper mapper = new ObjectMapper();
                 JsonParser jsonParser = mapper.getFactory().createParser(parameterPresent.getValue());
                 DeserializationContext deserializationContext = mapper.getDeserializationContext();
-                deserializedValue = new ValueDeserializer().deserialize(jsonParser, deserializationContext);
+                deserializedValue = valueDeserializer.deserialize(jsonParser, deserializationContext);
                 result.put(parameterPresent.getKey(), deserializedValue);
             }
             return result;
