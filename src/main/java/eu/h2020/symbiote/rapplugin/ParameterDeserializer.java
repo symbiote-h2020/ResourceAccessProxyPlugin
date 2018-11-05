@@ -9,17 +9,12 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.h2020.symbiote.model.cim.Parameter;
-import eu.h2020.symbiote.rapplugin.util.Utils;
 import eu.h2020.symbiote.rapplugin.value.Value;
 import eu.h2020.symbiote.rapplugin.value.ValueDeserializer;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import org.apache.http.client.HttpClient;
 
 /**
  *

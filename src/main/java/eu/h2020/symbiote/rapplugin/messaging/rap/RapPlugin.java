@@ -32,7 +32,6 @@ import eu.h2020.symbiote.cloud.model.rap.query.Query;
 import eu.h2020.symbiote.cloud.model.rap.registration.RegisterPluginMessage;
 import eu.h2020.symbiote.cloud.model.rap.registration.UnregisterPluginMessage;
 import eu.h2020.symbiote.rapplugin.CapabilityDeserializer;
-import eu.h2020.symbiote.rapplugin.DeserializerRegistry;
 import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
