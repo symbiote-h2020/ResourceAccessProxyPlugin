@@ -1,8 +1,11 @@
 package eu.h2020.symbiote.rapplugin.value;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 /**
  *
  * @author Michael Jacoby <michael.jacoby@iosb.fraunhofer.de>
+ * @param <T> actual type of the value
  */
 public interface Value<T> {
 
@@ -24,6 +27,10 @@ public interface Value<T> {
         return false;
     }
 
+    public default boolean isPrimitiveArray() {
+        return false;
+    }
+
     public default PrimitiveValue<T> asPrimitive() {
         if (PrimitiveValue.class.isAssignableFrom(this.getClass())) {
             return (PrimitiveValue<T>) this;
@@ -40,15 +47,17 @@ public interface Value<T> {
 
     public default ComplexValueArray asComplexArray() {
         if (ComplexValueArray.class.isAssignableFrom(this.getClass())) {
-            return (ComplexValueArray) this; 
+            return (ComplexValueArray) this;
         }
-        throw new RuntimeException("Value cannot be cast to complex value");
+        throw new RuntimeException("Value cannot be cast to complex value array");
     }
 
-    public default CustomTypeValue<T> asCustomType() {
-        if (CustomTypeValue.class.isAssignableFrom(this.getClass())) {
-            return (CustomTypeValue<T>) this;
+    public default PrimitiveValueArray asPrimitiveArray() {
+        if (PrimitiveValueArray.class.isAssignableFrom(this.getClass())) {
+            return (PrimitiveValueArray) this;
         }
-        throw new RuntimeException("Value cannot be cast to custom type value");
+        throw new RuntimeException("Value cannot be cast to primitive value array");
     }
+
+    public JsonNode asJson();
 }

@@ -1,5 +1,10 @@
 package eu.h2020.symbiote.rapplugin.value;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -62,7 +67,20 @@ public class ComplexValue implements Value<Map<String, Value>> {
         }
         return true;
     }
-    
-    
+
+    @Override
+    public JsonNode asJson() {
+        ObjectNode result = JsonNodeFactory.instance.objectNode();
+        values.forEach((k, v) -> result.set(k, v.asJson()));
+        return result;
+    }
+
+    public <T> T asCustom(Class<T> clazz) {
+        try {
+            return new ObjectMapper().treeToValue(asJson(), clazz);
+        } catch (JsonProcessingException ex) {
+            throw new ValueCastException("could not cast value as custom class '" + clazz.getSimpleName() + "'");
+        }
+    }
 
 }
