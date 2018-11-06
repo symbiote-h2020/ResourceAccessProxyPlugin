@@ -95,7 +95,10 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
 
     private void createRabbitResources() throws IOException {
         rabbitAdmin.declareExchange(ExchangeBuilder.topicExchange(PLUGIN_REGISTRATION_EXCHANGE).build());
-        rabbitAdmin.declareQueue(QueueBuilder.durable(PLUGIN_REGISTRATION_QUEUE_NAME).build());
+        rabbitAdmin.declareQueue(QueueBuilder.durable(PLUGIN_REGISTRATION_QUEUE_NAME)
+                .autoDelete()
+                .withArgument("x-message-ttl", rabbitReceiveTimeout)
+                .build());
         rabbitAdmin.purgeQueue(PLUGIN_REGISTRATION_QUEUE_NAME, true);
         rabbitAdmin.declareBinding(new Binding(PLUGIN_REGISTRATION_QUEUE_NAME, DestinationType.QUEUE, 
                 PLUGIN_REGISTRATION_EXCHANGE, PLUGIN_REGISTRATION_KEY, null));
