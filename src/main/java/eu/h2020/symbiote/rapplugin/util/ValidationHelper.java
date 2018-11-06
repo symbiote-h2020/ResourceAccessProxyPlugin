@@ -8,6 +8,7 @@ package eu.h2020.symbiote.rapplugin.util;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.h2020.symbiote.model.cim.Capability;
 import eu.h2020.symbiote.model.cim.ComplexDatatype;
 import eu.h2020.symbiote.model.cim.ComplexProperty;
 import eu.h2020.symbiote.model.cim.DataProperty;
@@ -24,6 +25,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -51,6 +54,18 @@ public class ValidationHelper {
                 throw new ValidationException("provided parameter '" + parameterPresent.getKey() + "' is not defined");
             }
             validateType(temp.get().getDatatype(), parameterPresent.getValue(), temp.get().getRestrictions());
+        }
+    }
+
+    public static void validateActuatorPayload(List<Capability> capabilitiesDefined, String payload) throws ValidationException {
+        Map<String, String> capabilitiesPresent = extractCapabilities(payload);
+
+        for (Map.Entry<String, String> capabilityPresent : capabilitiesPresent.entrySet()) {
+            Optional<Capability> temp = capabilitiesDefined.stream().filter(x -> x.getName().equals(capabilityPresent.getKey())).findAny();
+            if (!temp.isPresent()) {
+                throw new ValidationException("provided capability '" + capabilityPresent.getKey() + "' is not defined");
+            }
+            validateServicePayload(temp.get().getParameters(), capabilitiesPresent.get(temp.get().getName()));
         }
     }
 
@@ -148,4 +163,22 @@ public class ValidationHelper {
             throw new ValidationException("error extracting parameters from JSON", ex);
         }
     }
+
+    private static Map<String, String> extractCapabilities(String capabilitiesJson) throws ValidationException {
+        try {
+            Map<String, String> result = new HashMap<>();
+            JsonParser parser = new ObjectMapper().getFactory().createParser(capabilitiesJson);
+            JsonNode node = parser.readValueAsTree();
+            if (!node.isObject()) {
+                throw new ValidationException("provided JSON is not an object");
+            }
+            node.fields().forEachRemaining(x -> {
+                result.put(x.getKey(), x.getValue().toString());
+            });
+            return result;
+        } catch (IOException ex) {
+            throw new ValidationException("error extracting capabilities from JSON", ex);
+        }
+    }
+
 }
