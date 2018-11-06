@@ -114,7 +114,7 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of reading resource
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(arguments= 
+            value = @Queue(autoDelete="true", arguments= 
                 {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.get'}"
@@ -155,7 +155,7 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of reading history
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(arguments= 
+            value = @Queue(autoDelete="true", arguments= 
                 {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.history'}"
@@ -187,7 +187,7 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of actuating or invoking service
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(arguments= 
+            value = @Queue(autoDelete="true", arguments= 
                 {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.set'}"
