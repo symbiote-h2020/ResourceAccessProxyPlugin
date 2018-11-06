@@ -32,7 +32,7 @@ public class ResourceAccessListenerAdapter implements ResourceAccessListener {
     @SuppressWarnings("deprecation")
     @Override
     public String getResource(List<ResourceInfo> resourceInfo) {
-        if (Utils.isResourcePath(resourceInfo)) {
+        if (Utils.isSensorPath(resourceInfo)) {
             String lastInternalId = Utils.getInternalResourceId(resourceInfo);
             Observation readResourceResult = delegate.readResource(lastInternalId);
             try {
@@ -50,7 +50,7 @@ public class ResourceAccessListenerAdapter implements ResourceAccessListener {
     @SuppressWarnings("deprecation")
     @Override
     public String getResourceHistory(List<ResourceInfo> resourceInfo, int top, Query filterQuery) {
-        if (Utils.isResourcePath(resourceInfo)) {
+        if (Utils.isSensorPath(resourceInfo)) {
             if (filterQuery != null) {
                 throw new RapPluginException(HttpStatus.NOT_IMPLEMENTED.value(), "filter operator not supported");
             }

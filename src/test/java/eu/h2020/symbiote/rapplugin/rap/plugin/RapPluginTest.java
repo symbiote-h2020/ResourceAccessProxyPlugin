@@ -53,14 +53,13 @@ public class RapPluginTest {
     @Mock
     private ServiceAccessListener serviceAccessListener;
 
-
     @Mock
     private ReadingResourceListener readingResourceListener;
 
     @Mock
     private ActuatingResourceListener actuatingResourceListener;
 
-    @Mock 
+    @Mock
     private InvokingServiceListener invokingServiceListener;
 
     @Mock
@@ -69,6 +68,7 @@ public class RapPluginTest {
     private final String symbioteId = "symbioteId";
     private final String internalId = "internalId";
     private ResourceInfo resourceSensor;
+    private ResourceInfo resourceObservation;
     private ResourceInfo resourceActuator;
     private ResourceInfo resourceService;
     private Observation observation;
@@ -80,6 +80,8 @@ public class RapPluginTest {
     public void initializeData() throws IOException {
         resourceSensor = new ResourceInfo(symbioteId, internalId);
         resourceSensor.setType("Sensor");
+        resourceObservation = new ResourceInfo();
+        resourceObservation.setType("Observation");
         resourceActuator = new ResourceInfo(symbioteId, internalId);
         resourceActuator.setType("Actuator");
         resourceService = new ResourceInfo(symbioteId, internalId);
@@ -106,7 +108,7 @@ public class RapPluginTest {
     public void callingReadingResourceWhenNotRegisteredListener_shouldThrowException() throws Exception {
         RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
-            plugin.doReadResource(Arrays.asList(resourceSensor));
+            plugin.doReadResource(Arrays.asList(resourceSensor, resourceObservation));
         })
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("ResourceAccessListener not registered in RapPlugin")
@@ -119,7 +121,7 @@ public class RapPluginTest {
         plugin.registerReadingResourceListener(readingAccessListener);
         plugin.unregisterReadingResourceListener(readingAccessListener);
         assertThatThrownBy(() -> {
-            plugin.doReadResource(Arrays.asList(resourceSensor));
+            plugin.doReadResource(Arrays.asList(resourceSensor, resourceObservation));
         })
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("ResourceAccessListener not registered in RapPlugin")
@@ -133,13 +135,13 @@ public class RapPluginTest {
         plugin.registerReadingResourceListener(readingResourceListener);
         plugin.unregisterReadingResourceListener(readingResourceListener);
         assertThatThrownBy(() -> {
-            plugin.doReadResource(Arrays.asList(resourceSensor));
+            plugin.doReadResource(Arrays.asList(resourceSensor, resourceObservation));
         })
-        .isInstanceOf(RuntimeException.class)
-        .hasMessage("ResourceAccessListener not registered in RapPlugin")
-        .hasNoCause();
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("ResourceAccessListener not registered in RapPlugin")
+                .hasNoCause();
     }
-    
+
     @Test
     public void registeringAccessListenerAndCallingReadingResource_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
@@ -148,9 +150,9 @@ public class RapPluginTest {
         mapper.addMixIn(Observation.class, ObservationMixin.class);
         when(readingAccessListener.getResource(any()))
                 .thenReturn(mapper.writeValueAsString(observation));
-        
-        String result = plugin.doReadResource(Arrays.asList(resourceSensor));
-        
+
+        String result = plugin.doReadResource(Arrays.asList(resourceSensor, resourceObservation));
+
         Observation resultObservation = new ObjectMapper().readValue(result, Observation.class);
         assertThat(resultObservation).isEqualTo(observation);
     }
@@ -163,19 +165,19 @@ public class RapPluginTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.addMixIn(Observation.class, ObservationMixin.class);
         when(readingResourceListener.readResource(any()))
-            .thenReturn(observation);
-        
-        String result = plugin.doReadResource(Arrays.asList(resourceSensor));
-        
+                .thenReturn(observation);
+
+        String result = plugin.doReadResource(Arrays.asList(resourceSensor, resourceObservation));
+
         Observation resultObservation = new ObjectMapper().readValue(result, Observation.class);
         assertThat(resultObservation).isEqualTo(observation);
     }
-    
+
     @Test
     public void callingReadingResourceHistoryWhenNotRegisteredListener_shouldThrowException() throws Exception {
         RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
-            plugin.doReadResourceHistory(Arrays.asList(resourceSensor), 1, null);
+            plugin.doReadResourceHistory(Arrays.asList(resourceSensor, resourceObservation), 1, null);
         })
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("ResourceAccessListener not registered in RapPlugin")
@@ -194,7 +196,7 @@ public class RapPluginTest {
                 .thenReturn(expectedResult);
         plugin.registerReadingResourceListener(readingAccessListener);
         String result = plugin.doReadResourceHistory(
-                Arrays.asList(resourceSensor),
+                Arrays.asList(resourceSensor, resourceObservation),
                 observations.size(),
                 null);
         List<Observation> resultObservation = mapper.readValue(result, mapper.getTypeFactory().constructCollectionType(List.class, Observation.class));
@@ -208,12 +210,12 @@ public class RapPluginTest {
         when(readingResourceListener.readResourceHistory(any()))
                 .thenReturn(observations);
         plugin.registerReadingResourceListener(readingResourceListener);
-        
+
         String result = plugin.doReadResourceHistory(
-                Arrays.asList(resourceSensor),
+                Arrays.asList(resourceSensor, resourceObservation),
                 observations.size(),
                 null);
-        
+
         List<Observation> resultObservation = mapper.readValue(result, mapper.getTypeFactory().constructCollectionType(List.class, Observation.class));
         assertThat(resultObservation).isEqualTo(observations);
     }
@@ -260,10 +262,10 @@ public class RapPluginTest {
     public void registeringActuatorAccessListenerAndCallingActuateResource_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
         plugin.registerActuatingResourceListener(actuatorAccessListener);
-        
+
         plugin.doActuateResource("resourceId", null);
-        
-        verify(actuatorAccessListener).actuateResource(any(), any());        
+
+        verify(actuatorAccessListener).actuateResource(any(), any());
     }
 
     @SuppressWarnings("deprecation")
@@ -271,12 +273,12 @@ public class RapPluginTest {
     public void registeringActuatingResourceListenerAndCallingActuateResource_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
         plugin.registerActuatingResourceListener(actuatingResourceListener);
-        
+
         plugin.doActuateResource("resourceId", actuatorParameters);
-        
+
         verify(actuatingResourceListener).actuateResource(any(), any());
     }
-    
+
     @Test
     public void callingInvokeServiceWhenNotRegisteredListener_shouldThrowException() throws Exception {
         RapPlugin plugin = createRapPlugin();
@@ -337,9 +339,9 @@ public class RapPluginTest {
         plugin.registerInvokingServiceListener(invokingServiceListener);
         when(invokingServiceListener.invokeService(any(), any()))
                 .thenReturn(expectedResult);
-        
+
         String result = plugin.doInvokeService(internalId, serviceParameters);
-        
+
         assertThat(result).isEqualTo(new ObjectMapper().writeValueAsString(expectedResult));
     }
 

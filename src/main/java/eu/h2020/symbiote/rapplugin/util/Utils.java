@@ -21,6 +21,7 @@ import eu.h2020.symbiote.rapplugin.value.Value;
 import eu.h2020.symbiote.rapplugin.value.ValueDeserializer;
 import eu.h2020.symbiote.semantics.ModelHelper;
 import eu.h2020.symbiote.semantics.ontology.BIM;
+import eu.h2020.symbiote.semantics.ontology.CIM;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -69,6 +70,20 @@ public class Utils {
                 && !resourceInfo.get(resourceInfo.size() - 1).getInternalId().isEmpty();
     }
 
+    public static boolean isSensorPath(List<ResourceInfo> resourceInfo) {
+        return resourceInfo != null
+                && !resourceInfo.isEmpty()
+                && resourceInfo.size() >= 2
+                && resourceInfo.get(resourceInfo.size() - 2) != null
+                && resourceInfo.get(resourceInfo.size() - 2).getType().equalsIgnoreCase(CIM.Sensor.getLocalName())
+                && resourceInfo.get(resourceInfo.size() - 2).getInternalId() != null
+                && !resourceInfo.get(resourceInfo.size() - 2).getInternalId().isEmpty()
+                && resourceInfo.get(resourceInfo.size() - 1) != null
+                && resourceInfo.get(resourceInfo.size() - 1).getType().equalsIgnoreCase(CIM.Observation.getLocalName())
+                && (resourceInfo.get(resourceInfo.size() - 1).getInternalId() == null
+                || resourceInfo.get(resourceInfo.size() - 1).getInternalId().isEmpty());
+    }
+
     /**
      * Returns a single internal resource ID for a list of ResourceInfo objects
      * if possible, null otherweise. For null-safe access, check with
@@ -79,8 +94,15 @@ public class Utils {
      * resource; otherwise null
      */
     public static String getInternalResourceId(List<ResourceInfo> resourceInfo) {
-        if (isResourcePath(resourceInfo)) {
-            return getLastResourceInfo(resourceInfo).getInternalId();
+        if (resourceInfo == null || resourceInfo.isEmpty()) {
+            return null;
+        }
+        for (int i = resourceInfo.size() - 1; i >= 0; i--) {
+            if (resourceInfo.get(i) != null
+                    && resourceInfo.get(i).getInternalId() != null
+                    && !resourceInfo.get(i).getInternalId().isEmpty()) {
+                return resourceInfo.get(i).getInternalId();
+            }
         }
         return null;
     }
@@ -100,11 +122,13 @@ public class Utils {
     }
 
     public static boolean isPrimitiveDatatype(Datatype datatype) {
-        return PrimitiveDatatype.class.isAssignableFrom(datatype.getClass());
+        return PrimitiveDatatype.class
+                .isAssignableFrom(datatype.getClass());
     }
 
     public static boolean isComplexDatatype(Datatype datatype) {
-        return ComplexDatatype.class.isAssignableFrom(datatype.getClass());
+        return ComplexDatatype.class
+                .isAssignableFrom(datatype.getClass());
     }
 
     public static <T> List<T> toList(final Iterator<T> iterator) {
@@ -151,8 +175,10 @@ public class Utils {
                     + "    ?s <" + propertyUri + "> ?o .\n"
                     + "    FILTER(isLiteral(?o)) \n"
                     + "}");
+
         } catch (IOException ex) {
-            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Utils.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
         return result;
     }
@@ -171,7 +197,9 @@ public class Utils {
             throw new RuntimeException(response.getStatusLine().toString());
         }
         String json = EntityUtils.toString(response.getEntity());
-        return new ObjectMapper().readValue(json, CloudResource.class).getResource();
+
+        return new ObjectMapper().readValue(json, CloudResource.class
+        ).getResource();
     }
 
     public static List<Parameter> getServiceParameterDefinition(String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
@@ -180,7 +208,9 @@ public class Utils {
 
     public static List<Parameter> getServiceParameterDefinition(HttpClient httpClient, String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
         Resource resource = getResourceDescription(httpClient, registrationHandlerUrl, internalId);
-        if (!Service.class.isAssignableFrom(resource.getClass())) {
+
+        if (!Service.class
+                .isAssignableFrom(resource.getClass())) {
             // TODO make more generic to handle actuators as well
             throw new RuntimeException("resource is not a Service");
         }
@@ -193,7 +223,9 @@ public class Utils {
 
     public static List<Capability> getActuatorCapabilitiesParameterDefinition(HttpClient httpClient, String registrationHandlerUrl, String internalId) throws UnsupportedEncodingException, IOException {
         Resource resource = getResourceDescription(httpClient, registrationHandlerUrl, internalId);
-        if (!Actuator.class.isAssignableFrom(resource.getClass())) {
+
+        if (!Actuator.class
+                .isAssignableFrom(resource.getClass())) {
             throw new RuntimeException("resource is not a Service");
         }
         return ((Actuator) resource).getCapabilities();
