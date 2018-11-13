@@ -28,9 +28,11 @@ or add following for specific version:
 
 `compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:{version}')`
 
-Current version is `0.4.0`.
+Current version is `0.5.0`.
 
-**NOTE:** The previous versions (until 0.3.5) had different artifact name. Now the artifact name is ResourceAccessProxyPlugin**Starter**.
+**NOTE:** The versions until 0.3.5 had different artifact name. Now the artifact name is ResourceAccessProxyPlugin**Starter**.
+
+**NOTE:** The versions from 0.5.0 have new listener interfaces.
 
 This is dependency from jitpack repository. 
 In order to use jitpack you need to put in `build.gradle` 
@@ -59,18 +61,21 @@ rap-plugin.notificationsSupported=false
 ```
 
 The first line is defining the name of this specific RAP plugin.
-**NOTE:** When you register resource in the registration JSON there is `pluginId` which need to be this name. In this case it needs to be `RapPluginExample`.
+
+**NOTE:** When you register resource in the registration JSON 
+there is `pluginId` which needs to be this name. In this case 
+it needs to be `RapPluginExample`.
 
 The second group of lines is configuration of RabbitMQ server. The RAP plugin communicates
 with RAP component by using RabbitMQ server. For connecting to RabbitMQ server RAP plugin
-needs to know hots, username and password. The default values are in this example.
+needs to know host, username and password. The default values are in this example.
 
 The third group of lines are configuration of RAP plugin. 
 
 If `filtersSupported` is `false` then
 the RAP component will filter responses from RAP plugin. Then the RAP plugin needs to return
 all observations when history is asked. If this value is `true` then the RAP is responsible
-for filtering data.
+for filtering data. The data is send in new listeners.
 
 If `notificationsSupported` is `false` it means that RAP plugin can not stream data. If it
 is `true` then it can accept subscriptions and RAP plugin is responsible for pushing data
@@ -79,10 +84,19 @@ on changed resource. Subscriptions are supported by registering `NotificationRes
 ### 4. Registering RAP plugin consumers
 
 There are following RAP plugin consumers:
-- for reading resources there is `ReadingResourceListener`
-- for activating actuator there is `ActuatingoResourceListener`
-- for invoking service there is `InvokingServiceResourceListener`
+- for reading resources there are:
+  - **OLD** - `ReadingResourceListener`
+  - **NEW** - `ResourceAccessListener`
+- for activating actuator there are:
+  - **OLD** - `ActuatingoResourceListener` 
+  - **NEW** - `ActuatorAccessListener` 
+- for invoking service there are:
+  - **OLD** - `InvokingServiceResourceListener`
+  - **NEW** - `ActuatorAccessListener`
 - for beginning and ending subscription there is `NotificationResourceListener`
+
+Old listeners and registratin methods are deprecated and can be removed in new
+version.
 
 Registering and unregistering resources is done by calling `register...` 
 or `unregister...` methods
@@ -90,7 +104,9 @@ in `RapPlugin` class. `RapPlugin` class can be injected like any other bean.
 
 ### 5. Reading resources
 When resource needs to be read the RAP component will send message to RAP plugin and
-that message will cause calling method in `ReadingResourceListener` class.
+that message will cause calling method in registered listener. 
+
+#### 5.1. Old listener `ReadingResourceListener`
 It has following methods:
 
 - `Observation readResource(String resourceId)` for reading one resource.
@@ -127,10 +143,77 @@ rapPlugin.registerReadingResourceListener(new ReadingResourceListener() {
     }
 });
 ```
+#### 5.2. New listener `ResourceAccessListener`
+It has following methods:
+
+- `String getResource(List<ResourceInfo> resourceInfo)` for reading last observation.
+The argument `resourceInfo` represents resource. Internal id can be extracted by using
+`Utils.getInternalResourceId(resourceInfo)` 
+It returns last observed value converted to JSON ans returned as `String`.
+- `String getResourceHistory(List<ResourceInfo> resourceInfo, int top, Query filterQuery)` 
+for reading historical observed values.
+The arguments are `resourceInfo` that represents resource, `top` is value 
+of how many observations needs to be returned and `filterQuery` are other filters 
+(if property `rap-plugin.filtersSupported` is `false` it will always be `null`). 
+It returns observations that are convertes to JSON and returned as `String`.
+
+In the case that reading is not possible method should throw 
+`RapPluginException`.
+
+Here is example of registering and handling faked values for resource with 
+internal id `rp_isen1` or `isen1`:
+
+```java
+rapPlugin.registerReadingResourceListener(new ResourceAccessListener() {
+    
+    @Override
+    public String getResourceHistory(List<ResourceInfo> resourceInfo, int top, Query filterQuery) {
+        LOG.debug("reading resource history with info {}", resourceInfo);
+        
+        String resourceId = Utils.getInternalResourceId(resourceInfo);
+        
+        if("rp_isen1".equals(resourceId) || "isen1".equals(resourceId)) {
+            // This is the place to put reading history data of sensor.
+            List<Observation> observations = new LinkedList<>();
+            for (int i = 0; i < top; i++) {
+                observations.add(createObservation(resourceId));
+            }
+            
+            try {
+                return mapper.writeValueAsString(observations);
+            } catch (JsonProcessingException e) {
+                throw new RapPluginException(500, "Can not convert observations to JSON", e);
+            }
+        } else { 
+            throw new RapPluginException(404, "Sensor not found.");
+        }
+    }
+    
+    @Override
+    public String getResource(List<ResourceInfo> resourceInfo) {
+        LOG.debug("reading resource with info {}", resourceInfo);
+        
+        String resourceId = Utils.getInternalResourceId(resourceInfo);
+
+        if("rp_isen1".equals(resourceId) || "isen1".equals(resourceId)) {
+            // This is place to put reading data from sensor 
+            try {
+                return mapper.writeValueAsString(createObservation(resourceId));
+            } catch (JsonProcessingException e) {
+                throw new RapPluginException(500, "Can not convert observation to JSON", e);
+            }
+        }
+            
+        throw new RapPluginException(404, "Sensor not found.");
+    }
+});
+```
  
 ### 6. Triggering actuator
-For actuating resource there is `ActuatingResourceListener`. There 
-is only one method in this interface: 
+For actuating resource there are listeners with only one method.
+
+#### 6.1 Old listener `ActuatingResourceListener`
+The method in this interface is: 
 `void actuateResource(String resourceId, Map<String,Capability> parameters);`.
 
 Arguments are: internal resource ID and actuation parameters map.
@@ -165,9 +248,57 @@ rapPlugin.registerActuatingResourceListener(new ActuatingResourceListener() {
 });
 ```
 
+#### 6.2 New listener `ActuatorAccessListener`
+The method in this interface is: 
+`void actuateResource(String internalId, Map<String, Map<String, Value>> capabilities)`.
+
+Arguments are: internal resource ID and actuation capability map.
+The key of map is capability name and value is parameters map. 
+Parameters map has key which
+is parameter name and value is `Value` interface. `Value` interface has 4 implementations: 
+`PrimitiveValue`, `PrimitiveValueArray`, `ComplexValue` and `ComplexValueArray`.
+
+This method can throw `RapPluginException` when actuation can not be executed.
+
+Here is example implementation:
+```java
+rapPlugin.registerActuatingResourceListener(new ActuatorAccessListener() {
+    @Override
+    public void actuateResource(String internalId, Map<String, Map<String, Value>> capabilities) {
+        System.out.println("Called actuation for resource " + internalId);
+        // print capabilities
+        for (Entry<String, Map<String, Value>> capabilityEntry: capabilities.entrySet()) {
+            System.out.println("Capability: " + capabilityEntry.getKey());
+            
+            for(Entry<String, Value> parameterEntry: capabilityEntry.getValue().entrySet()) {
+                System.out.print(" " + parameterEntry.getKey() + " = ");
+                PrimitiveValue primitiveValue = parameterEntry.getValue().asPrimitive();
+                if(primitiveValue.isString()) {
+                    System.out.println(primitiveValue.asString());
+                } else if (primitiveValue.isInt()) {
+                    System.out.println(primitiveValue.asInt());
+                } else {
+                    System.out.println(primitiveValue.toString());
+                }
+            }
+        }
+        
+        if("rp_iaid1".equals(internalId) || "iaid1".equals(internalId)) {
+            // This is place to put actuation code for resource with id
+            System.out.println("iaid1 is actuated");
+            return;
+        } else {
+            throw new RapPluginException(404, "Actuating entity not found.");
+        }
+    }
+});
+```
+
 ### 7. Invoking service
-For invoking service there is `InvokingServiceListener`. There 
-is only one method in this interface: 
+For invoking service there is listeners with only one method.
+
+#### 7.1 Old listener `InvokingServiceListener`
+The method in this interface is: 
 `Object invokeService(String resourceId, Map<String,Parameter> parameters);`.
 
 Arguments are: internal resource ID and actuation parameters map.
@@ -191,6 +322,44 @@ rapPlugin.registerInvokingServiceListener(new InvokingServiceListener() {
         } else {
             throw new RapPluginException(404, "Service not found.");
         }
+    }
+});
+```
+#### 7.2 New listener `ServiceAccessListener`
+The method in this interface is: 
+`String invokeService(String internalId, Map<String, Value> parameters)`.
+
+Arguments are: internal resource ID and actuation parameters map.
+Parameters map has key which
+is parameter name and value is `Value` interface (the same as in case of actuation,
+see details there).
+
+This method can throw `RapPluginException` when invoking service can not be executed.
+
+Here is example implementation:
+```java
+rapPlugin.registerInvokingServiceListener(new ServiceAccessListener() {
+    
+    @Override
+    public String invokeService(String internalId, Map<String, Value> parameters) {
+    System.out.println("In invoking service of resource " + internalId);
+    
+    // print parameters
+    for(Entry<String, Value> parameterEntry: parameters.entrySet()) {
+        System.out.println(" Parameter - name: " + parameterEntry.getKey() + " value: " + 
+                parameterEntry.getValue().asPrimitive().asString());
+    }
+    
+    try {
+        if("rp_isrid1".equals(internalId)) {
+            return mapper.writeValueAsString("ok");
+        } else if ("isrid1".equals(internalId)) {
+            return mapper.writeValueAsString("some json");
+        } else {
+            throw new RapPluginException(404, "Service not found.");
+        }
+    } catch (JsonProcessingException e) {
+        throw new RapPluginException(500, "Can not convert service response to JSON", e);
     }
 });
 ```
