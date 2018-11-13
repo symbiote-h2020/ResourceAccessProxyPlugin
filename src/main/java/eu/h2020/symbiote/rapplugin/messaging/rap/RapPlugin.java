@@ -122,7 +122,7 @@ public class RapPlugin implements SmartLifecycle {
         containerFactory = "noRequeueRabbitContainerFactory"
     )
     public RapPluginResponse fromAmqpReadResource(Message<?> msg) {
-        LOG.debug("reading resource: {}", msg.getPayload());
+        LOG.debug("reading resource: {}", payloadToString(msg.getPayload()));
 
         try {
             ResourceAccessGetMessage message = deserializeRequest(msg, ResourceAccessGetMessage.class);
@@ -136,6 +136,29 @@ public class RapPlugin implements SmartLifecycle {
             LOG.error(responseMsg, e);
             return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
         }
+    }
+
+    private String payloadToString(Object payload) {
+        StringBuilder sb = new StringBuilder();
+        String stringMsg;
+        if (payload instanceof byte[]) {
+            sb.append("byte[]: ");
+            stringMsg = new String((byte[]) payload, StandardCharsets.UTF_8);
+        } else if (payload instanceof String) {
+            sb.append("String: ");
+            stringMsg = (String) payload;
+        } else {
+            stringMsg = payload.toString();
+        }
+        // trim to max 1000 characters
+        if(stringMsg.length() > 1000) {
+            sb.append(stringMsg.substring(0, 1000));
+            sb.append("...");
+        } else {
+            sb.append(stringMsg);
+        }
+        
+        return sb.toString();
     }
 
     private String generateErrorResponseMessage(String errorMsg, Message<?> msg) {
@@ -163,7 +186,7 @@ public class RapPlugin implements SmartLifecycle {
         containerFactory = "noRequeueRabbitContainerFactory"
     )
     public RapPluginResponse fromAmqpHistoryResource(Message<?> msg) {
-        LOG.debug("reading history resource: {}", msg.getPayload());
+        LOG.debug("reading history resource: {}", payloadToString(msg.getPayload()));
 
         try {
             ResourceAccessHistoryMessage msgHistory = deserializeRequest(msg, ResourceAccessHistoryMessage.class);
@@ -195,7 +218,7 @@ public class RapPlugin implements SmartLifecycle {
         containerFactory = "noRequeueRabbitContainerFactory"
     )
     public RapPluginResponse fromAmqpSetResource(Message<?> msg) {
-        LOG.debug("actuating/invoking service on resource: {}", msg.getPayload());
+        LOG.debug("actuating/invoking service on resource: {}", payloadToString(msg.getPayload()));
         
         try {
             ResourceAccessSetMessage message = deserializeRequest(msg, ResourceAccessSetMessage.class);
