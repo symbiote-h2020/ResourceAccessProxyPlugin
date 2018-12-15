@@ -93,8 +93,8 @@ dependencies {
     // jitpack
     compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.33+') { changing = true }
 
-    compile('com.github.symbiote-h2020:SymbIoTeSemantics:develop-SNAPSHOT')
-    //compile('com.github.symbiote-h2020:SymbIoTeSemantics:2.3.1')
+    //compile('com.github.symbiote-h2020:SymbIoTeSemantics:develop-SNAPSHOT')
+    compile('com.github.symbiote-h2020:SymbIoTeSemantics:2.3.4')
     
     compileOnly('org.projectlombok:lombok')
     testCompileOnly('org.projectlombok:lombok')
