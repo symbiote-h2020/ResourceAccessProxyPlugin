@@ -16,7 +16,7 @@ Example of project using RAP plugin starter is in following repository [https://
 
 ### 1. Creating new SpringBoot project
 
-Create new SpringBoot project with no dependencies.
+Create new SpringBoot (1.5.18) project with no dependencies.
 
 ### 2. Adding symbIoTe dependencies to `build.gradle`
 
@@ -28,7 +28,7 @@ or add following for specific version:
 
 `compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:{version}')`
 
-Current version is `0.5.0`.
+Current version is `0.5.1`.
 
 **NOTE:** The versions until 0.3.5 had different artifact name. Now the artifact name is ResourceAccessProxyPlugin**Starter**.
 
