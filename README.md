@@ -55,6 +55,7 @@ spring.application.name=RapPluginExample
 rabbit.host=localhost
 rabbit.username=guest
 rabbit.password=guest
+rabbit.replyTimeout=60000
 
 rap-plugin.filtersSupported=false
 rap-plugin.notificationsSupported=false
