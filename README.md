@@ -28,7 +28,7 @@ or add following for specific version:
 
 `compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:{version}')`
 
-Current version is `0.5.1`.
+Current version is `0.5.2`.
 
 **NOTE:** The versions until 0.3.5 had different artifact name. Now the artifact name is ResourceAccessProxyPlugin**Starter**.
 
