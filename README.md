@@ -34,9 +34,9 @@ Current version is `0.5.2`.
 
 **NOTE:** The versions from 0.5.0 have new listener interfaces.
 
-This is dependency from jitpack repository. 
-In order to use jitpack you need to put in `build.gradle` 
-following lines as well:
+This is dependency from jitpack repository. In order to use
+jitpack you need to put in `build.gradle` following lines as
+well:
 
 ```
 repositories {
