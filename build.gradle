@@ -1,20 +1,8 @@
-buildscript {
-    ext {
-        springBootVersion = '1.5.18.RELEASE'
-        springCloudVersion = 'Dalston.SR5'
-    }
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '2.3.1'
-    }
-}
-
 plugins {
-    id 'java'
-    id 'io.franzbecker.gradle-lombok' version '1.8'
+	id 'org.springframework.boot' version '2.1.4.RELEASE'
+	id 'java'
+    id 'io.franzbecker.gradle-lombok' version '3.0.0'
+    id "com.cinnober.gradle.semver-git" version "2.4.0"
 
     // code quality
     id "jacoco"
@@ -26,17 +14,26 @@ plugins {
     // publishing
     id "maven"
     id "maven-publish"
+	
 }
 
-apply plugin: 'org.springframework.boot'
-apply plugin: 'com.cinnober.gradle.semver-git'
+apply plugin: 'io.spring.dependency-management'
+
+ext {
+	set('springCloudVersion', 'Greenwich.SR1')
+}
 
 group = 'eu.h2020.symbiote'
 
 // this is needed for starter to not create fat jar
-bootRepackage.enabled = false
+//bootRepackage.enabled = false
+bootJar {
+	enabled = false
+	classifier = 'boot'
+}
 
 jar {
+	enabled = true
     version =  project.version
 }
 
@@ -73,8 +70,8 @@ allprojects {
     }
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 11
+targetCompatibility = 11
 
 configurations.all {
     // check for updates every build
@@ -85,7 +82,7 @@ configurations.all {
 dependencies {
     compile('org.springframework.boot:spring-boot-starter')
     compile('org.springframework.boot:spring-boot-starter-amqp')
-    compile('org.hibernate:hibernate-validator')
+    //compile('org.hibernate:hibernate-validator')
     
     
     // mavenLocal  
@@ -140,7 +137,7 @@ configurations.all {
 
 // jacoco configuration section
 jacoco {
-    toolVersion = "0.7.9"
+    toolVersion = "0.8.3"
 }
 
 jacocoTestReport {

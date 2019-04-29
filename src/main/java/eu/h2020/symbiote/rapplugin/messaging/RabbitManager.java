@@ -7,8 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -104,7 +104,7 @@ public class RabbitManager {
             MessagePropertiesBuilder.newInstance()
                 .setContentType("plain/text")
                 .setHeader("__TypeId__", String.class.getName())
-                .setCorrelationIdString(correlationId)
+                .setCorrelationId(correlationId)
                 .build()
             );
         rabbitTemplate.setReplyTimeout(REPLY_TIMEOUT);

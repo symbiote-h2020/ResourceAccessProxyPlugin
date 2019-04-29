@@ -118,8 +118,7 @@ public class RapPlugin implements SmartLifecycle {
                 {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.get'}"
-        ),
-        containerFactory = "noRequeueRabbitContainerFactory"
+        )
     )
     public RapPluginResponse fromAmqpReadResource(Message<?> msg) {
         LOG.debug("reading resource: {}", payloadToString(msg.getPayload()));
