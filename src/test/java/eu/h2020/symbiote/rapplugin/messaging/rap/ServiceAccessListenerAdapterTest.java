@@ -16,6 +16,7 @@ import eu.h2020.symbiote.rapplugin.value.Value;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@Deprecated(forRemoval = true)
 public class ServiceAccessListenerAdapterTest {
 
     protected String actualResourceId;

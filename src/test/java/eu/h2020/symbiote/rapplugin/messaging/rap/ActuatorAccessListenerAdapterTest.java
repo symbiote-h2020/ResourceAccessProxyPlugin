@@ -11,6 +11,7 @@ import eu.h2020.symbiote.rapplugin.domain.Parameter;
 import eu.h2020.symbiote.rapplugin.value.PrimitiveValue;
 import eu.h2020.symbiote.rapplugin.value.Value;
 
+@Deprecated(forRemoval = true)
 public class ActuatorAccessListenerAdapterTest {
     
     private String actualResourceId;
