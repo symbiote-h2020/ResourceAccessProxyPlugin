@@ -356,7 +356,7 @@ public class RapPlugin implements SmartLifecycle {
      * 
      * @deprecated Instead of {@link ReadingResourceListener} use {@link ResourceAccessListener}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public void registerReadingResourceListener(ReadingResourceListener listener) {
         this.readingResourceListener = new ResourceAccessListenerAdapter(listener);
     }
@@ -377,7 +377,7 @@ public class RapPlugin implements SmartLifecycle {
      * 
      * @deprecated Instead of {@link ReadingResourceListener} use {@link ResourceAccessListener}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public void unregisterReadingResourceListener(ReadingResourceListener listener) {
         this.readingResourceListener = null;
     }
@@ -428,7 +428,7 @@ public class RapPlugin implements SmartLifecycle {
      * 
      * @deprecated Instead of {@link ActuatingResourceListener} use {@link ActuatorAccessListener}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public void registerActuatingResourceListener(ActuatingResourceListener listener) {
         this.actuatingResourceListener = new ActuatorAccessListenerAdapter(listener);
     }
@@ -449,7 +449,7 @@ public class RapPlugin implements SmartLifecycle {
      * 
      * @deprecated Instead of {@link ActuatingResourceListener} use {@link ActuatorAccessListener}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public void unregisterActuatingResourceListener(ActuatingResourceListener listener) {
         this.actuatingResourceListener = null;
     }
@@ -485,7 +485,7 @@ public class RapPlugin implements SmartLifecycle {
      * 
      * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener} 
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public void registerInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
         this.invokingServiceListener = new ServiceAccessListenerAdapter(invokingServiceListener);
     }
@@ -506,7 +506,7 @@ public class RapPlugin implements SmartLifecycle {
      * 
      * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public void unregisterInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
         this.invokingServiceListener = null;
     }
