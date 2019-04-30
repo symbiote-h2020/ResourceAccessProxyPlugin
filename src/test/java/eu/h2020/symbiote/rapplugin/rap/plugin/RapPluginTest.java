@@ -1,39 +1,39 @@
 package eu.h2020.symbiote.rapplugin.rap.plugin;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.times;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.model.cim.Observation;
-import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
-import eu.h2020.symbiote.rapplugin.messaging.rap.ReadingResourceListener;
-
-import java.util.Arrays;
-import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatingResourceListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatorAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.InvokingServiceListener;
+import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
+import eu.h2020.symbiote.rapplugin.messaging.rap.ReadingResourceListener;
+import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.SubscriptionListener;
 import eu.h2020.symbiote.rapplugin.value.PrimitiveValue;
 import eu.h2020.symbiote.rapplugin.value.Value;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import org.junit.Before;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 
 /**
  * @author Mario Kušek <mario.kusek@fer.hr>

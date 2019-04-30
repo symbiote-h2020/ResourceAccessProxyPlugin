@@ -1,8 +1,7 @@
 package eu.h2020.symbiote.rapplugin.messaging.rap;
 
-import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
-import eu.h2020.symbiote.rapplugin.ValidationException;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +12,6 @@ import eu.h2020.symbiote.rapplugin.domain.Parameter;
 import eu.h2020.symbiote.rapplugin.value.ComplexValue;
 import eu.h2020.symbiote.rapplugin.value.PrimitiveValue;
 import eu.h2020.symbiote.rapplugin.value.Value;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @Deprecated(forRemoval = true)
 public class ServiceAccessListenerAdapterTest {

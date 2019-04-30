@@ -5,18 +5,18 @@
  */
 package eu.h2020.symbiote.rapplugin;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.h2020.symbiote.rapplugin.value.Value;
-import eu.h2020.symbiote.rapplugin.value.ValueDeserializer;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import eu.h2020.symbiote.rapplugin.value.Value;
+import eu.h2020.symbiote.rapplugin.value.ValueDeserializer;
 
 /**
  *

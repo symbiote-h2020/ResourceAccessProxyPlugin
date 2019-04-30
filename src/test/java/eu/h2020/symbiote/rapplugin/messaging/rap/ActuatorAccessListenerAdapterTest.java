@@ -1,13 +1,13 @@
 package eu.h2020.symbiote.rapplugin.messaging.rap;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
 import eu.h2020.symbiote.rapplugin.domain.Capability;
-import eu.h2020.symbiote.rapplugin.domain.Parameter;
 import eu.h2020.symbiote.rapplugin.value.PrimitiveValue;
 import eu.h2020.symbiote.rapplugin.value.Value;
 

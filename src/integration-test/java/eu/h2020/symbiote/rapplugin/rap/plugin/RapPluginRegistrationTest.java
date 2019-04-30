@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.rapplugin.rap.plugin;
 
 import static eu.h2020.symbiote.util.json.JsonPathAssert.assertThat;
-import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
@@ -27,19 +26,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
 
 import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;
+import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitConfiguration;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapDefinitions;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import eu.h2020.symbiote.rapplugin.properties.RabbitProperties;
-import eu.h2020.symbiote.rapplugin.properties.Properties;
 import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
-import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
 
 @RunWith(SpringRunner.class)
 @Import({TestingRabbitConfig.class,
