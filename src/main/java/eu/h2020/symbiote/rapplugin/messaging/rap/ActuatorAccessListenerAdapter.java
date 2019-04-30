@@ -13,14 +13,12 @@ import eu.h2020.symbiote.rapplugin.value.Value;
 @Deprecated(forRemoval = true)
 public class ActuatorAccessListenerAdapter implements ActuatorAccessListener {
 
-    @SuppressWarnings("deprecation")
     private ActuatingResourceListener delegate;
 
-    public ActuatorAccessListenerAdapter(@SuppressWarnings("deprecation") ActuatingResourceListener listener) {
+    public ActuatorAccessListenerAdapter(ActuatingResourceListener listener) {
         this.delegate = listener;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void actuateResource(String internalId, Map<String, Map<String, Value>> capabilities) {
         delegate.actuateResource(internalId, convertCapabilities(capabilities));

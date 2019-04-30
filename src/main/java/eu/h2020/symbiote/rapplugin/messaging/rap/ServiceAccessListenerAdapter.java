@@ -15,12 +15,11 @@ import eu.h2020.symbiote.rapplugin.value.Value;
 @Deprecated(forRemoval = true)
 public class ServiceAccessListenerAdapter implements ServiceAccessListener {
 
-    @SuppressWarnings("deprecation")
     private InvokingServiceListener delegate;
     
     private ObjectMapper mapper;
 
-    public ServiceAccessListenerAdapter(@SuppressWarnings("deprecation") InvokingServiceListener listener) {
+    public ServiceAccessListenerAdapter(InvokingServiceListener listener) {
         this.delegate = listener;
         mapper = new ObjectMapper();
     }

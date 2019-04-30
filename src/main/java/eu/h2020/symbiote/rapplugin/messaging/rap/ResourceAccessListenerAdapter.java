@@ -23,14 +23,12 @@ public class ResourceAccessListenerAdapter implements ResourceAccessListener {
 
     static final Logger LOG = LoggerFactory.getLogger(ResourceAccessListenerAdapter.class);
     
-    @SuppressWarnings("deprecation")
     private ReadingResourceListener delegate;
     
-    public ResourceAccessListenerAdapter(@SuppressWarnings("deprecation") ReadingResourceListener listener) {
+    public ResourceAccessListenerAdapter(ReadingResourceListener listener) {
         delegate = listener;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public String getResource(List<ResourceInfo> resourceInfo) {
         if (Utils.isSensorPath(resourceInfo)) {
@@ -48,7 +46,6 @@ public class ResourceAccessListenerAdapter implements ResourceAccessListener {
         }
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public String getResourceHistory(List<ResourceInfo> resourceInfo, int top, Query filterQuery) {
         if (Utils.isSensorPath(resourceInfo)) {
