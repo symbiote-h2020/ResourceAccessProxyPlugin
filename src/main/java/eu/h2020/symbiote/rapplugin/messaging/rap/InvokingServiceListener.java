@@ -14,7 +14,7 @@ import eu.h2020.symbiote.rapplugin.domain.Parameter;
  *
  * @deprecated Replaced by {@link ServiceAccessListener}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface InvokingServiceListener {
     /**  
      * This method is called when RAP received request for invoking service.

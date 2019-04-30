@@ -10,6 +10,7 @@ import eu.h2020.symbiote.rapplugin.domain.Capability;
 import eu.h2020.symbiote.rapplugin.domain.Parameter;
 import eu.h2020.symbiote.rapplugin.value.Value;
 
+@Deprecated(forRemoval = true)
 public class ActuatorAccessListenerAdapter implements ActuatorAccessListener {
 
     @SuppressWarnings("deprecation")

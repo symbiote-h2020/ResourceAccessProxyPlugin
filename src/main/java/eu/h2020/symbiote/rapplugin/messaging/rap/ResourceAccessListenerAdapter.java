@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
  * @author Mario Kusek <mario.kusek@fer.hr>
  * 
  */
+@Deprecated(forRemoval = true)
 public class ResourceAccessListenerAdapter implements ResourceAccessListener {
 
     static final Logger LOG = LoggerFactory.getLogger(ResourceAccessListenerAdapter.class);
