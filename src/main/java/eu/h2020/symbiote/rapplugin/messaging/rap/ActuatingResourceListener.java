@@ -14,6 +14,7 @@ import eu.h2020.symbiote.rapplugin.domain.Capability;
  * 
  * @deprecated Replaced by {@link ActuatorAccessListener}
  */
+@Deprecated(forRemoval = true)
 public interface ActuatingResourceListener {
     /**  
      * This method is called when RAP received request for actuation.

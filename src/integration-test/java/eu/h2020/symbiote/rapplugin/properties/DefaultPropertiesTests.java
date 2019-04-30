@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.rapplugin.properties;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -8,11 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import eu.h2020.symbiote.rapplugin.properties.RabbitProperties;
-import eu.h2020.symbiote.rapplugin.properties.Properties;
-import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)

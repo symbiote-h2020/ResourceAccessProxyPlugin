@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.rapplugin.messaging.rap;
 
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
-import lombok.Getter;
 
 /**
  * This exception is thrown when implementation can not execute some operation

@@ -1,9 +1,13 @@
 package eu.h2020.symbiote.rapplugin.rap.plugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.anyMap;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,6 +40,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -44,46 +50,37 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.github.paweladamski.httpclientmock.HttpClientMock;
 import com.rabbitmq.client.Channel;
-import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 
+import eu.h2020.symbiote.cloud.model.internal.CloudResource;
+import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessGetMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessHistoryMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessSetMessage;
-import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.model.cim.Actuator;
 import eu.h2020.symbiote.model.cim.Capability;
+import eu.h2020.symbiote.model.cim.Observation;
+import eu.h2020.symbiote.model.cim.Parameter;
+import eu.h2020.symbiote.model.cim.PrimitiveDatatype;
+import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.rapplugin.EmbeddedRabbitFixture;
+import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitConfiguration;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginErrorResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginOkResponse;
 import eu.h2020.symbiote.rapplugin.messaging.RapPluginResponse;
+import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatorAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapDefinitions;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPluginException;
+import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
+import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
 import eu.h2020.symbiote.rapplugin.properties.RabbitProperties;
 import eu.h2020.symbiote.rapplugin.properties.RapPluginProperties;
 import eu.h2020.symbiote.rapplugin.value.Value;
-import eu.h2020.symbiote.rapplugin.TestingRabbitConfig;
-import eu.h2020.symbiote.model.cim.Observation;
-import eu.h2020.symbiote.model.cim.Parameter;
-import eu.h2020.symbiote.model.cim.PrimitiveDatatype;
-import eu.h2020.symbiote.model.cim.Service;
-import eu.h2020.symbiote.rapplugin.CapabilityDeserializer;
-import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
-import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatorAccessListener;
-import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
-import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
 import eu.h2020.symbiote.security.accesspolicies.common.AccessPolicyType;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @Import({RabbitManager.class,
@@ -356,6 +353,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         assertThat(errResponse.getResponseCode()).isEqualTo(500);
     }      
 
+    @SuppressWarnings("unchecked")
     @Test @DirtiesContext
     public void sendingResourceAccessActuation_shouldReturn204() throws Exception {
         //given
@@ -378,8 +376,10 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         RapPluginResponse response = (RapPluginOkResponse) returnedObject;
         assertThat(response.getResponseCode()).isEqualTo(204);
         
+        @SuppressWarnings("rawtypes")
         ArgumentCaptor<Map>  argumentCaptor = ArgumentCaptor.forClass(Map.class);
         verify(writingListener).actuateResource(eq(internalId), argumentCaptor.capture());
+        @SuppressWarnings("rawtypes")
         Map<String, Map<String, Value>> actualCapabilities = argumentCaptor.getValue();
 
         assertThat(actualCapabilities).containsOnlyKeys(actuatorParameters.keySet().toArray(new String[actuatorParameters.size()]));
@@ -387,6 +387,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         assertCapability(actualCapabilities, "capability_2", "parameter_name_2", "parameter_value_2");
     }
 
+    @SuppressWarnings("unchecked")
     @Test @DirtiesContext
     public void sendingResourceAccessActuation_whenTypeIsLight_shouldReturn204() throws Exception {
         //given
@@ -409,8 +410,10 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         RapPluginResponse response = (RapPluginOkResponse) returnedObject;
         assertThat(response.getResponseCode()).isEqualTo(204);
         
+        @SuppressWarnings("rawtypes")
         ArgumentCaptor<Map>  argumentCaptor = ArgumentCaptor.forClass(Map.class);
         verify(writingListener).actuateResource(eq(internalId), argumentCaptor.capture());
+        @SuppressWarnings("rawtypes")
         Map<String, Map<String, Value>> actualCapabilities = argumentCaptor.getValue();
 
         assertThat(actualCapabilities).containsOnlyKeys(actuatorParameters.keySet().toArray(new String[actuatorParameters.size()]));
@@ -476,6 +479,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
                 .thenReturn(expectedServiceResult);
         rapPlugin.registerInvokingServiceListener(listener);
 
+        @SuppressWarnings("resource")
         HttpClientMock httpClientMock = new HttpClientMock();
         httpClientMock
                 .onGet()

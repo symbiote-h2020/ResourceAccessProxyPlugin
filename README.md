@@ -7,7 +7,7 @@
 ## Using RAP Plugin
 
 The idea of RAP Plugin is to use it as dependency in implementation that connects your platform with SymbIoTe. 
-Generic parts like RabbitMQ communication with RAP component is implemented in this library. 
+Generic parts like RabbitMQ communication with RAP component is implemented in this library.
 That way a developer doesn't have to implement complex communication.
 
 Example of project using RAP plugin starter is in following repository [https://github.com/symbiote-h2020/RapPluginExample](https://github.com/symbiote-h2020/RapPluginExample)
@@ -395,9 +395,9 @@ public Observation createObservation(String sensorId) {
     
     ObservationValue obsval = 
             new ObservationValue(
-                    "7", 
-                    new Property("Temperature", "TempIRI", Arrays.asList("Air temperature")), 
-                    new UnitOfMeasurement("C", "degree Celsius", "C_IRI", null));
+                "7", 
+                new Property("Temperature", "TempIRI", Arrays.asList("Air temperature")), 
+                new UnitOfMeasurement("C", "degree Celsius", "C_IRI", null));
     ArrayList<ObservationValue> obsList = new ArrayList<>();
     obsList.add(obsval);
     
