@@ -70,8 +70,8 @@ allprojects {
     }
 }
 
-sourceCompatibility = 11
-targetCompatibility = 11
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 configurations.all {
     // check for updates every build
