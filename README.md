@@ -99,7 +99,7 @@ There are following RAP plugin consumers:
   - **NEW** - `ActuatorAccessListener` 
 - for invoking service there are:
   - **OLD** - `InvokingServiceResourceListener`
-  - **NEW** - `ActuatorAccessListener`
+  - **NEW** - `ServiceAccessListener`
 - for beginning and ending subscription there is `NotificationResourceListener`
 
 Old listeners and registratin methods are deprecated and can be removed in new
