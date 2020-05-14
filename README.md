@@ -3,7 +3,7 @@
 [![](https://jitpack.io/v/symbiote-h2020/ResourceAccessProxyPluginStarter.svg)](https://jitpack.io/#symbiote-h2020/ResourceAccessProxyPluginStarter)
 
 # RELEASE NOTES
-## 1.0.1
+## 1.0.3
 Supports use with Java 8 and 11. Uses new version of SpringBoot 2.2.x and new version of SpringCloud Greenwich.SR1. Current deprecated classes and methods will be removed in 1.1.x
 
 ## 0.5.0
@@ -38,7 +38,7 @@ or add following for specific version:
 
 `compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:{version}')`
 
-Current version is `1.0.1`.
+Current version is `1.0.3`.
 
 This is dependency from jitpack repository. In order to use
 jitpack you need to put in `build.gradle` following lines as
