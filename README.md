@@ -3,8 +3,8 @@
 [![](https://jitpack.io/v/symbiote-h2020/ResourceAccessProxyPluginStarter.svg)](https://jitpack.io/#symbiote-h2020/ResourceAccessProxyPluginStarter)
 
 # RELEASE NOTES
-## 1.0.0
-Supports use with Java 8 and 11. Uses new version of SpringBoot 2.1.x and new version of SpringCloud Greenwich.SR1. Current deprecated classes and methods will be removed in 1.1.x
+## 1.0.1
+Supports use with Java 8 and 11. Uses new version of SpringBoot 2.2.x and new version of SpringCloud Greenwich.SR1. Current deprecated classes and methods will be removed in 1.1.x
 
 ## 0.5.0
 This version has new listener interfaces. The old ones are deprecated.
@@ -26,7 +26,7 @@ Example of project using RAP plugin starter is in following repository [https://
 
 ### 1. Creating new SpringBoot project
 
-Create new SpringBoot (2.1.4) project with no dependencies.
+Create new SpringBoot (2.2.7) project with no dependencies.
 
 ### 2. Adding symbIoTe dependencies to `build.gradle`
 
@@ -38,7 +38,7 @@ or add following for specific version:
 
 `compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:{version}')`
 
-Current version is `1.0.0`.
+Current version is `1.0.1`.
 
 This is dependency from jitpack repository. In order to use
 jitpack you need to put in `build.gradle` following lines as
