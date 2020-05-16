@@ -2,7 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '2.2.7.RELEASE'
 	id 'java'
     id 'io.franzbecker.gradle-lombok' version '4.0.0'
-    id "com.cinnober.gradle.semver-git" version "2.4.0"
+    id "com.cinnober.gradle.semver-git" version "3.0.0"
     id 'com.github.ben-manes.versions' version '0.28.0' // find new versions of dependency task: dependencyUpdates
 
     // code quality
@@ -89,10 +89,7 @@ dependencies {
     // mavenLocal  
     //compile('eu.h2020.symbiote:SymbIoTeLibraries:5.29.0-SNAPSHOT')
     // jitpack
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.38+') { changing = true }
-
-    //compile('com.github.symbiote-h2020:SymbIoTeSemantics:develop-SNAPSHOT')
-    compile('com.github.symbiote-h2020:SymbIoTeSemantics:2.3.5')
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:6.0+') { changing = true }
     
     compileOnly('org.projectlombok:lombok')
     testCompileOnly('org.projectlombok:lombok')
