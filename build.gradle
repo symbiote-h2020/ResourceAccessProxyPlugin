@@ -171,7 +171,6 @@ task allTestReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/allTests")
 }
 
-/*
 test {
     jacoco {
         destinationFile = file("$buildDir/jacoco/test.exec")
@@ -190,10 +189,10 @@ task jacocoIntegrationTestReport(type: JacocoReport) {
         html.enabled = true
         html.destination = file("${buildDir}/reports/jacoco/integrationTest/html")
     }
- 
-    executionData = files(["${buildDir}/jacoco/integrationTest.exec"])
-    classDirectories = files("$buildDir/classes/integrationTest", "$buildDir/classes/main")
-    sourceDirectories = sourceSets.main.allJava
+
+	executionData(files(["${buildDir}/jacoco/integrationTest.exec"]))
+    additionalClassDirs(files("$buildDir/classes/java/integrationTest", "$buildDir/classes/java/main"))
+    sourceDirectories.from(sourceSets.main.allJava)
 }
 
 jacocoIntegrationTestReport.dependsOn integrationTest
@@ -211,20 +210,20 @@ task jacocoAllTestReport(type: JacocoReport) {
         html.destination = file("${buildDir}/reports/jacoco/allTest/html")
     }
  
-    executionData = files([
+    executionData(files([
             "${buildDir}/jacoco/integrationTest.exec", 
-            "${buildDir}/jacoco/test.exec"])
-    classDirectories = files("$buildDir/classes/main", "$buildDir/classes/integrationTest", "$buildDir/classes/test", )
-    sourceDirectories = sourceSets.main.allJava
+            "${buildDir}/jacoco/test.exec"]))
+    additionalClassDirs(files("$buildDir/classes/java/main", "$buildDir/classes/java/integrationTest", "$buildDir/classes/java/test"))
+    sourceDirectories.from(sourceSets.main.allJava)
 }
 jacocoAllTestReport.dependsOn test, integrationTest
 check.dependsOn jacocoAllTestReport
+
 
 // reports for integration tests in different directory
 tasks.withType(Test) {
     reports.html.destination = file("${reporting.baseDir}/${name}")
 }
-*/
 
 /*
 Run only unit tests
