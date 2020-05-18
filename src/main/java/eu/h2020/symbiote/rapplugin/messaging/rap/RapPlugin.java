@@ -18,16 +18,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessGetMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessHistoryMessage;
-import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessSetMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessSubscribeMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessUnSubscribeMessage;
@@ -278,44 +275,65 @@ public class RapPlugin implements SmartLifecycle {
         return obj;
     }
 
-    // TODO removed eventualy (when all feature will be implemented) because it is not used
-    // class which sends this is ResourceAccessRestController
-    public String receiveMessage(String message) {
-        String json = null;
-        try {
-            ResourceAccessMessage msg = mapper.readValue(message, ResourceAccessMessage.class);
-            ResourceAccessMessage.AccessType access = msg.getAccessType();
-            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-            mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-            switch (access) {
-                // TODO test SUBSCRIBE
-                case SUBSCRIBE: {
-                    // WebSocketController
-                    ResourceAccessSubscribeMessage mess = (ResourceAccessSubscribeMessage) msg;
-                    List<ResourceInfo> infoList = mess.getResourceInfoList();
-                    for (ResourceInfo info : infoList) {
-                        doSubscribeResource(info.getInternalId());
-                    }
-                    break;
-                }
-                // TODO test unsubscribe
-                // TODO test notifications sending
-                case UNSUBSCRIBE: {
-                    // WebSocketController
-                    ResourceAccessUnSubscribeMessage mess = (ResourceAccessUnSubscribeMessage) msg;
-                    List<ResourceInfo> infoList = mess.getResourceInfoList();
-                    for (ResourceInfo info : infoList) {
-                        doUnsubscribeResource(info.getInternalId());
-                    }
-                    break;
-                }
-                default:
-                    throw new Exception("Access type " + access.toString() + " not supported");
-            }
-        } catch (Exception e) {
-            LOG.error("Error while processing message:\n" + message + "\n" + e);
+
+    @RabbitListener(bindings = @QueueBinding(
+        value = @Queue(autoDelete="true", arguments={@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
+        exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
+        key = "#{rapPlugin.enablerName + '.unsubscribe'}"
+      ),
+    containerFactory = "noRequeueRabbitContainerFactory"
+    )
+    public RapPluginResponse receiveUnsubscribeMessage(Message<?> msg) {
+      LOG.debug("Unsubscribing: {}", payloadToString(msg.getPayload()));
+
+      try {
+        ResourceAccessUnSubscribeMessage message = deserializeRequest(msg, ResourceAccessUnSubscribeMessage.class);
+
+        List<ResourceInfo> infoList = message.getResourceInfoList();
+        for (ResourceInfo info : infoList) {
+            doUnsubscribeResource(info.getInternalId());
         }
-        return json;
+
+        return new RapPluginOkResponse();
+      } catch (RapPluginException e) {
+        LOG.error(generateErrorResponseMessage(
+            "There is error in plugin in unsubscribing. RabbitMQ message: ", msg), e);
+        return e.getResponse();
+      } catch (Exception e) {
+        String responseMsg = generateErrorResponseMessage("Can not unsubscribe - request: ", msg);
+        LOG.error(responseMsg, e);
+        return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
+      }
+    }
+
+    @RabbitListener(bindings = @QueueBinding(
+        value = @Queue(autoDelete="true", arguments={@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
+        exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
+        key = "#{rapPlugin.enablerName + '.subscribe'}"
+        ),
+        containerFactory = "noRequeueRabbitContainerFactory"
+        )
+    public RapPluginResponse receiveSubscribeMessage(Message<?> msg) {
+      LOG.debug("Subscribing: {}", payloadToString(msg.getPayload()));
+
+      try {
+        ResourceAccessSubscribeMessage message = deserializeRequest(msg, ResourceAccessSubscribeMessage.class);
+
+        List<ResourceInfo> infoList = message.getResourceInfoList();
+        for (ResourceInfo info : infoList) {
+          doSubscribeResource(info.getInternalId());
+        }
+
+        return new RapPluginOkResponse();
+      } catch (RapPluginException e) {
+        LOG.error(generateErrorResponseMessage(
+            "There is error in plugin in subscribing. RabbitMQ message: ", msg), e);
+        return e.getResponse();
+      } catch (Exception e) {
+        String responseMsg = generateErrorResponseMessage("Can not subscribe - request: ", msg);
+        LOG.error(responseMsg, e);
+        return new RapPluginErrorResponse(500, responseMsg + "\n" + e.getMessage());
+      }
     }
 
     private void registerPlugin(String platformId, boolean hasFilters, boolean hasNotifications) {
