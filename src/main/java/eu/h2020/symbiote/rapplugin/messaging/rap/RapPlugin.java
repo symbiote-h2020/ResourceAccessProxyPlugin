@@ -7,14 +7,16 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.Argument;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.annotation.Argument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -22,16 +24,17 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessGetMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessHistoryMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessSetMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessSubscribeMessage;
 import eu.h2020.symbiote.cloud.model.rap.access.ResourceAccessUnSubscribeMessage;
-import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.cloud.model.rap.query.Query;
 import eu.h2020.symbiote.cloud.model.rap.registration.RegisterPluginMessage;
 import eu.h2020.symbiote.cloud.model.rap.registration.UnregisterPluginMessage;
+import eu.h2020.symbiote.model.cim.Observation;
 import eu.h2020.symbiote.rapplugin.CapabilityDeserializer;
 import eu.h2020.symbiote.rapplugin.ParameterDeserializer;
 import eu.h2020.symbiote.rapplugin.messaging.RabbitManager;
@@ -42,8 +45,6 @@ import eu.h2020.symbiote.rapplugin.properties.Properties;
 import eu.h2020.symbiote.rapplugin.util.Utils;
 import eu.h2020.symbiote.rapplugin.value.Value;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 
 /**
  * This is Spring component that handles requests from RAP. You can register
@@ -81,7 +82,7 @@ public class RapPlugin implements SmartLifecycle {
     private ObjectMapper mapper;
 
     private ParameterDeserializer parameterDeserializer;
-    
+
     private CapabilityDeserializer capabilityDeserializer;
 
     @Autowired
@@ -94,8 +95,8 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     public RapPlugin(
-            RabbitManager rabbitManager, 
-            String enablerName, 
+            RabbitManager rabbitManager,
+            String enablerName,
             boolean filtersSupported,
             boolean notificationsSupported) {
         this.rabbitManager = rabbitManager;
@@ -114,7 +115,7 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of reading resource
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(autoDelete="true", arguments= 
+            value = @Queue(autoDelete="true", arguments=
                 {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.get'}"
@@ -156,7 +157,7 @@ public class RapPlugin implements SmartLifecycle {
         } else {
             sb.append(stringMsg);
         }
-        
+
         return sb.toString();
     }
 
@@ -177,7 +178,7 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of reading history
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(autoDelete="true", arguments= 
+            value = @Queue(autoDelete="true", arguments=
                 {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.history'}"
@@ -209,7 +210,7 @@ public class RapPlugin implements SmartLifecycle {
      * @return response of actuating or invoking service
      */
     @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(autoDelete="true", arguments= 
+            value = @Queue(autoDelete="true", arguments=
                 {@Argument(name = "x-message-ttl", value="${rabbit.replyTimeout}", type="java.lang.Integer")}),
             exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "false", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.set'}"
@@ -218,7 +219,7 @@ public class RapPlugin implements SmartLifecycle {
     )
     public RapPluginResponse fromAmqpSetResource(Message<?> msg) {
         LOG.debug("actuating/invoking service on resource: {}", payloadToString(msg.getPayload()));
-        
+
         try {
             ResourceAccessSetMessage message = deserializeRequest(msg, ResourceAccessSetMessage.class);
             List<ResourceInfo> resourceInfo = message.getResourceInfo();
@@ -227,7 +228,7 @@ public class RapPlugin implements SmartLifecycle {
             }
             ResourceInfo lastResourceInfo = Utils.getLastResourceInfo(resourceInfo);
             String internalId = lastResourceInfo.getInternalId();
-            if(message.getBody().trim().startsWith("{")) { 
+            if(message.getBody().trim().startsWith("{")) {
             // TODO if (TYPE_ACTUATOR.equalsIgnoreCase(lastResourceInfo.getType())) {
                 // actuation
                 doActuateResource(internalId,
@@ -277,7 +278,7 @@ public class RapPlugin implements SmartLifecycle {
         return obj;
     }
 
-    // TODO removed eventualy (when all feature will be implemented) because it is not used 
+    // TODO removed eventualy (when all feature will be implemented) because it is not used
     // class which sends this is ResourceAccessRestController
     public String receiveMessage(String message) {
         String json = null;
@@ -348,19 +349,19 @@ public class RapPlugin implements SmartLifecycle {
         this.readingResourceListener = listener;
     }
 
-    
+
     /**
      * Registers listener for reading resource.
      *
      * @param listener
-     * 
+     *
      * @deprecated Instead of {@link ReadingResourceListener} use {@link ResourceAccessListener}
      */
     @Deprecated(forRemoval = true)
     public void registerReadingResourceListener(ReadingResourceListener listener) {
         this.readingResourceListener = new ResourceAccessListenerAdapter(listener);
     }
-    
+
     /**
      * Unregisters listener for reading resource.
      *
@@ -374,7 +375,7 @@ public class RapPlugin implements SmartLifecycle {
      * Unregisters listener for reading resource.
      *
      * @param listener
-     * 
+     *
      * @deprecated Instead of {@link ReadingResourceListener} use {@link ResourceAccessListener}
      */
     @Deprecated(forRemoval = true)
@@ -425,14 +426,14 @@ public class RapPlugin implements SmartLifecycle {
      * Registers listener for actuating resource.
      *
      * @param listener
-     * 
+     *
      * @deprecated Instead of {@link ActuatingResourceListener} use {@link ActuatorAccessListener}
      */
     @Deprecated(forRemoval = true)
     public void registerActuatingResourceListener(ActuatingResourceListener listener) {
         this.actuatingResourceListener = new ActuatorAccessListenerAdapter(listener);
     }
-    
+
     /**
      * Unregisters listener for actuating resource.
      *
@@ -446,14 +447,14 @@ public class RapPlugin implements SmartLifecycle {
      * Unregisters listener for actuating resource.
      *
      * @param listener
-     * 
+     *
      * @deprecated Instead of {@link ActuatingResourceListener} use {@link ActuatorAccessListener}
      */
     @Deprecated(forRemoval = true)
     public void unregisterActuatingResourceListener(ActuatingResourceListener listener) {
         this.actuatingResourceListener = null;
     }
-    
+
     /**
      * Executes actuation of resources.
      *
@@ -482,8 +483,8 @@ public class RapPlugin implements SmartLifecycle {
      * Registers listener for invoking service.
      *
      * @param invokingServiceListener
-     * 
-     * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener} 
+     *
+     * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener}
      */
     @Deprecated(forRemoval = true)
     public void registerInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
@@ -503,7 +504,7 @@ public class RapPlugin implements SmartLifecycle {
      * Unregisters listener for invoking service.
      *
      * @param invokingServiceListener
-     * 
+     *
      * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener}
      */
     @Deprecated(forRemoval = true)
@@ -570,6 +571,11 @@ public class RapPlugin implements SmartLifecycle {
         }
 
         notificationResourceListener.unsubscribeResource(resourceId);
+    }
+
+    public void sendNotification(Observation observation) {
+      rabbitManager.sendMessage(RapDefinitions.PLUGIN_NOTIFICATION_EXCHANGE_IN,
+          RapDefinitions.PLUGIN_NOTIFICATION_KEY, observation);
     }
 
     // Spring SmartLifecycle methods
