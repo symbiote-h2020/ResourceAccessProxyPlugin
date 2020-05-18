@@ -369,18 +369,6 @@ public class RapPlugin implements SmartLifecycle {
 
 
     /**
-     * Registers listener for reading resource.
-     *
-     * @param listener
-     *
-     * @deprecated Instead of {@link ReadingResourceListener} use {@link ResourceAccessListener}
-     */
-    @Deprecated(forRemoval = true)
-    public void registerReadingResourceListener(ReadingResourceListener listener) {
-        this.readingResourceListener = new ResourceAccessListenerAdapter(listener);
-    }
-
-    /**
      * Unregisters listener for reading resource.
      *
      * @param listener
@@ -389,17 +377,6 @@ public class RapPlugin implements SmartLifecycle {
         this.readingResourceListener = null;
     }
 
-    /**
-     * Unregisters listener for reading resource.
-     *
-     * @param listener
-     *
-     * @deprecated Instead of {@link ReadingResourceListener} use {@link ResourceAccessListener}
-     */
-    @Deprecated(forRemoval = true)
-    public void unregisterReadingResourceListener(ReadingResourceListener listener) {
-        this.readingResourceListener = null;
-    }
     /**
      * Execute reading resource.
      *
@@ -441,35 +418,11 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     /**
-     * Registers listener for actuating resource.
-     *
-     * @param listener
-     *
-     * @deprecated Instead of {@link ActuatingResourceListener} use {@link ActuatorAccessListener}
-     */
-    @Deprecated(forRemoval = true)
-    public void registerActuatingResourceListener(ActuatingResourceListener listener) {
-        this.actuatingResourceListener = new ActuatorAccessListenerAdapter(listener);
-    }
-
-    /**
      * Unregisters listener for actuating resource.
      *
      * @param listener
      */
     public void unregisterActuatingResourceListener(ActuatorAccessListener listener) {
-        this.actuatingResourceListener = null;
-    }
-
-    /**
-     * Unregisters listener for actuating resource.
-     *
-     * @param listener
-     *
-     * @deprecated Instead of {@link ActuatingResourceListener} use {@link ActuatorAccessListener}
-     */
-    @Deprecated(forRemoval = true)
-    public void unregisterActuatingResourceListener(ActuatingResourceListener listener) {
         this.actuatingResourceListener = null;
     }
 
@@ -498,35 +451,11 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     /**
-     * Registers listener for invoking service.
-     *
-     * @param invokingServiceListener
-     *
-     * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener}
-     */
-    @Deprecated(forRemoval = true)
-    public void registerInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
-        this.invokingServiceListener = new ServiceAccessListenerAdapter(invokingServiceListener);
-    }
-
-    /**
      * Unregisters listener for invoking service.
      *
      * @param invokingServiceListener
      */
     public void unregisterInvokingServiceListener(ServiceAccessListener invokingServiceListener) {
-        this.invokingServiceListener = null;
-    }
-
-    /**
-     * Unregisters listener for invoking service.
-     *
-     * @param invokingServiceListener
-     *
-     * @deprecated Instead of {@link InvokingServiceListener} use {@link ServiceAccessListener}
-     */
-    @Deprecated(forRemoval = true)
-    public void unregisterInvokingServiceListener(InvokingServiceListener invokingServiceListener) {
         this.invokingServiceListener = null;
     }
 

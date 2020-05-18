@@ -17,18 +17,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.h2020.symbiote.cloud.model.rap.ResourceInfo;
 import eu.h2020.symbiote.model.cim.Observation;
-import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatingResourceListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ActuatorAccessListener;
-import eu.h2020.symbiote.rapplugin.messaging.rap.InvokingServiceListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
-import eu.h2020.symbiote.rapplugin.messaging.rap.ReadingResourceListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ResourceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.ServiceAccessListener;
 import eu.h2020.symbiote.rapplugin.messaging.rap.SubscriptionListener;
@@ -52,15 +49,6 @@ public class RapPluginTest {
 
     @Mock
     private ServiceAccessListener serviceAccessListener;
-
-    @Mock
-    private ReadingResourceListener readingResourceListener;
-
-    @Mock
-    private ActuatingResourceListener actuatingResourceListener;
-
-    @Mock
-    private InvokingServiceListener invokingServiceListener;
 
     @Mock
     private SubscriptionListener notificationListener;
@@ -128,20 +116,6 @@ public class RapPluginTest {
                 .hasNoCause();
     }
 
-    @SuppressWarnings("deprecation")
-    @Test
-    public void callingReadingResourceWhenUnregisteredReadingResourceListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = createRapPlugin();
-        plugin.registerReadingResourceListener(readingResourceListener);
-        plugin.unregisterReadingResourceListener(readingResourceListener);
-        assertThatThrownBy(() -> {
-            plugin.doReadResource(Arrays.asList(resourceSensor, resourceObservation));
-        })
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("ResourceAccessListener not registered in RapPlugin")
-                .hasNoCause();
-    }
-
     @Test
     public void registeringAccessListenerAndCallingReadingResource_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
@@ -150,22 +124,6 @@ public class RapPluginTest {
         mapper.addMixIn(Observation.class, ObservationMixin.class);
         when(readingAccessListener.getResource(any()))
                 .thenReturn(mapper.writeValueAsString(observation));
-
-        String result = plugin.doReadResource(Arrays.asList(resourceSensor, resourceObservation));
-
-        Observation resultObservation = new ObjectMapper().readValue(result, Observation.class);
-        assertThat(resultObservation).isEqualTo(observation);
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    public void registeringReadingResourceListenerAndCallingReadingResource_shouldCallListener() throws Exception {
-        RapPlugin plugin = createRapPlugin();
-        plugin.registerReadingResourceListener(readingResourceListener);
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.addMixIn(Observation.class, ObservationMixin.class);
-        when(readingResourceListener.readResource(any()))
-                .thenReturn(observation);
 
         String result = plugin.doReadResource(Arrays.asList(resourceSensor, resourceObservation));
 
@@ -204,23 +162,6 @@ public class RapPluginTest {
     }
 
     @Test
-    public void registeringReadingResourceListenerAndCallingReadingResourceHistory_shouldCallListener() throws Exception {
-        RapPlugin plugin = createRapPlugin();
-        ObjectMapper mapper = new ObjectMapper();
-        when(readingResourceListener.readResourceHistory(any()))
-                .thenReturn(observations);
-        plugin.registerReadingResourceListener(readingResourceListener);
-
-        String result = plugin.doReadResourceHistory(
-                Arrays.asList(resourceSensor, resourceObservation),
-                observations.size(),
-                null);
-
-        List<Observation> resultObservation = mapper.readValue(result, mapper.getTypeFactory().constructCollectionType(List.class, Observation.class));
-        assertThat(resultObservation).isEqualTo(observations);
-    }
-
-    @Test
     public void callingWritingResourceWhenNotRegisteredListener_shouldThrowException() throws Exception {
         RapPlugin plugin = createRapPlugin();
         assertThatThrownBy(() -> {
@@ -244,20 +185,6 @@ public class RapPluginTest {
                 .hasNoCause();
     }
 
-    @SuppressWarnings("deprecation")
-    @Test
-    public void callingWritingResourceWhenUnregisteredListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = createRapPlugin();
-        plugin.registerActuatingResourceListener(actuatingResourceListener);
-        plugin.unregisterActuatingResourceListener(actuatingResourceListener);
-        assertThatThrownBy(() -> {
-            plugin.doActuateResource(internalId, actuatorParameters);
-        })
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("ActuatorAccessListener not registered in RapPlugin")
-                .hasNoCause();
-    }
-
     @Test
     public void registeringActuatorAccessListenerAndCallingActuateResource_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
@@ -266,17 +193,6 @@ public class RapPluginTest {
         plugin.doActuateResource("resourceId", null);
 
         verify(actuatorAccessListener).actuateResource(any(), any());
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    public void registeringActuatingResourceListenerAndCallingActuateResource_shouldCallListener() throws Exception {
-        RapPlugin plugin = createRapPlugin();
-        plugin.registerActuatingResourceListener(actuatingResourceListener);
-
-        plugin.doActuateResource("resourceId", actuatorParameters);
-
-        verify(actuatingResourceListener).actuateResource(any(), any());
     }
 
     @Test
@@ -303,20 +219,6 @@ public class RapPluginTest {
                 .hasNoCause();
     }
 
-    @SuppressWarnings("deprecation")
-    @Test
-    public void callingInvokeServiceWhenUnregisteredInvokingServiceListener_shouldThrowException() throws Exception {
-        RapPlugin plugin = createRapPlugin();
-        plugin.registerInvokingServiceListener(invokingServiceListener);
-        plugin.unregisterInvokingServiceListener(invokingServiceListener);
-        assertThatThrownBy(() -> {
-            plugin.doInvokeService(internalId, serviceParameters);
-        })
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("ServiceAccessListener not registered in RapPlugin")
-                .hasNoCause();
-    }
-
     @Test
     public void registeringServiceAccessLisntenerAndCallingInvokingService_shouldCallListener() throws Exception {
         RapPlugin plugin = createRapPlugin();
@@ -329,20 +231,6 @@ public class RapPluginTest {
         String result = plugin.doInvokeService(internalId, serviceParameters);
         JsonNode resultJson = new ObjectMapper().readTree(result);
         assertThat(resultJson).isEqualTo(expectedResultJson);
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    public void registeringInvokingServiceLisntenerAndCallingInvokingService_shouldCallListener() throws Exception {
-        RapPlugin plugin = createRapPlugin();
-        String expectedResult = "OK";
-        plugin.registerInvokingServiceListener(invokingServiceListener);
-        when(invokingServiceListener.invokeService(any(), any()))
-                .thenReturn(expectedResult);
-
-        String result = plugin.doInvokeService(internalId, serviceParameters);
-
-        assertThat(result).isEqualTo(new ObjectMapper().writeValueAsString(expectedResult));
     }
 
     @Test
